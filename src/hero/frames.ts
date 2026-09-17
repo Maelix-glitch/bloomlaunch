@@ -114,6 +114,15 @@ export class FrameSequencePlayer {
     } else {
       await this.fillWindow(0);
     }
+    if (this.destroyed) return;
+
+    // If nothing decoded (broken/missing frames), hand back to the
+    // staged scene — never leave the visitor a black stage.
+    if (!this.bitmaps.some(Boolean)) {
+      this.hooks.onUnavailable();
+      return;
+    }
+    this.hooks.onReady();
   }
 
   destroy(): void {
