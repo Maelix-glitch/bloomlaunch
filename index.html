@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Bloom — Your life, in bloom</title>
+  <meta name="description" content="Bloom is a gentle home for your days — mood, rhythm, habits and the moments between. One quiet place to understand yourself." />
+  <meta name="theme-color" content="#0b0910" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+  <!-- Open Graph / social -->
+  <meta property="og:title" content="Bloom — Your life, in bloom" />
+  <meta property="og:description" content="Mood, rhythm, habits and the moments between — held in one gentle place." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+  <a class="skip-link" href="#today">Skip to content</a>
+
+  <!-- ================= NAV ================= -->
+  <header class="site-nav" id="top">
+    <a class="nav-brand" href="#top" aria-label="Bloom — back to top">
+      <span class="nav-mark" data-mark-slot aria-hidden="true"></span>
+      <span class="nav-word">bloom</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#today">Inside Bloom</a>
+      <a href="#chapters">Chapters</a>
+      <a href="#launch">Launch</a>
+    </nav>
+  </header>
+
+  <main id="main">
+
+    <!-- ================= 00 · OVERTURE ================= -->
+    <!-- Darkness → anticipation → Bloom mark settles → prepared reveal
+         (frame sequence) → Mac appearance → camera entry into Bloom. -->
+    <section class="hero" id="overture" aria-label="Bloom — opening scene">
+      <div class="hero-sticky">
+
+        <!-- atmosphere -->
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-grain" aria-hidden="true"></div>
+        <div class="hero-vignette" aria-hidden="true"></div>
+
+        <!-- camera rig: everything inside dollies together on scroll -->
+        <div class="hero-rig">
+
+          <!-- Prepared frame sequence (canvas). Authored frames live in
+               public/frames/ — see ASSETS.md. Hidden until decoded. -->
+          <canvas class="hero-frames" id="hero-frames" aria-hidden="true"></canvas>
+
+          <!-- Staged scene: the physically anchored Mac. Serves as the
+               faithful fallback when authored frames are not supplied yet,
+               and as the under-layer during decode. -->
+          <div class="stage" aria-hidden="true">
+            <div class="stage-horizon"></div>
+            <div class="mac">
+              <div class="mac-lid">
+                <div class="mac-screen">
+                  <div class="mini-ui">
+                    <div class="mini-top">
+                      <span class="mini-date">Thu 18 Sep</span>
+                      <span class="mini-greet">Good evening</span>
+                    </div>
+                    <div class="mini-grid">
+                      <div class="mini-card">
+                        <span class="mini-orb" aria-hidden="true"></span>
+                        <span class="mini-label">Inner weather · Gentle</span>
+                      </div>
+                      <div class="mini-card">
+                        <svg class="mini-ring" viewBox="0 0 72 72" aria-hidden="true">
+                          <circle class="mini-ring-track" cx="36" cy="36" r="28" />
+                          <circle class="mini-ring-arc" cx="36" cy="36" r="28" />
+                          <circle class="mini-ring-today" cx="36" cy="8" r="3" />
+                        </svg>
+                        <span class="mini-label">Day 17 of 29</span>
+                      </div>
+                      <div class="mini-card">
+                        <span class="mini-bars" aria-hidden="true">
+                          <i style="--v:72%"></i><i style="--v:54%"></i><i style="--v:86%"></i>
+                        </span>
+                        <span class="mini-label">Sleep · Water · Movement</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <span class="mac-notch" aria-hidden="true"></span>
+              </div>
+              <div class="mac-base" aria-hidden="true"><span class="mac-lip"></span></div>
+            </div>
+            <div class="mac-shadow"></div>
+            <div class="mac-floorlight"></div>
+          </div>
+
+          <!-- The exact Bloom mark descends and settles here. The supplied
+               production logo (public/logo/) replaces the provisional mark. -->
+          <div class="mark-slot" id="hero-mark-slot">
+            <span class="hero-mark" data-mark-slot data-mark-size="hero"></span>
+          </div>
+        </div>
+
+        <!-- editorial copy arrives after the Mac settles -->
+        <div class="hero-copy">
+          <p class="eyebrow">A quieter home for your days</p>
+          <h1 class="display">Your life,<br /><em>in bloom.</em></h1>
+          <p class="lede">Mood, rhythm, habits and the moments between —<br class="lede-br" /> held in one gentle place.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#today">Enter Bloom</a>
+            <a class="btn btn-ghost" href="#chapters">The chapters</a>
+          </div>
+        </div>
+
+        <div class="scroll-cue" aria-hidden="true"><span class="scroll-cue-line"><span class="scroll-cue-dot"></span></span></div>
+
+        <p class="sr-only">A dark scene brightens as the Bloom mark settles above a softly lit computer, which rises into view. Scrolling moves the camera closer, into the app itself.</p>
+      </div>
+    </section>
+
+    <!-- ================= 01 · ENTRY ================= -->
+    <section class="today" id="today" aria-labelledby="today-title">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Inside Bloom</p>
+        <h2 class="h2" id="today-title">One gentle home for today.</h2>
+        <p class="section-lede">The whole day in one calm glance — no dashboards, no noise.</p>
+      </div>
+
+      <div class="app-frame" data-reveal data-parallax="0.03" aria-label="Bloom app — Today view (sample data)">
+        <div class="app-chrome" aria-hidden="true">
+          <span class="app-dot"></span><span class="app-dot"></span><span class="app-dot"></span>
+          <span class="app-chrome-title">Bloom — Today</span>
+        </div>
+        <div class="app-body">
+          <nav class="app-side" aria-label="Bloom app sections">
+            <span class="app-side-item is-active">Today</span>
+            <span class="app-side-item">Stories</span>
+            <span class="app-side-item">Mood</span>
+            <span class="app-side-item">Cycle</span>
+            <span class="app-side-item">Trackers</span>
+            <span class="app-side-item">Rewards</span>
+            <span class="app-side-item">Coach</span>
+          </nav>
+          <div class="app-main">
+            <header class="app-greet">
+              <p class="app-date">Thursday 18 September</p>
+              <h3 class="app-title">Good evening, Anaya<span class="bloom-dot" aria-hidden="true">✿</span></h3>
+            </header>
+
+            <div class="app-grid">
+              <article class="app-card app-card-mood">
+                <p class="app-card-label">Inner weather</p>
+                <div class="mood-orb" aria-hidden="true"></div>
+                <p class="app-card-value">Gentle, clearing</p>
+                <div class="mood-chips" role="group" aria-label="Sample mood check-in options">
+                  <button class="chip" type="button">Gentle</button>
+                  <button class="chip" type="button">Steady</button>
+                  <button class="chip" type="button">Tender</button>
+                  <button class="chip" type="button">Bright</button>
+                </div>
+              </article>
+
+              <article class="app-card app-card-cycle">
+                <p class="app-card-label">Cycle</p>
+                <svg class="cycle-ring" viewBox="0 0 200 200" role="img" aria-label="Cycle ring: day 17 of 29">
+                  <g class="cycle-ticks"></g>
+                  <circle class="cycle-track" cx="100" cy="100" r="78" />
+                  <circle class="cycle-arc" cx="100" cy="100" r="78" />
+                  <circle class="cycle-today" cx="100" cy="22" r="5" />
+                </svg>
+                <p class="app-card-value">Day 17 <span class="dim">of 29</span></p>
+                <p class="app-card-note">Luteal · next phase in 5 days</p>
+              </article>
+
+              <article class="app-card app-card-signals">
+                <p class="app-card-label">Signals</p>
+                <ul class="signal-rows">
+                  <li class="signal-row">
+                    <span class="signal-name">Sleep</span>
+                    <svg class="spark" viewBox="0 0 120 28" aria-hidden="true"><path class="spark-line" d="M2 18 C 14 12, 22 22, 34 16 S 56 8, 68 14 S 96 22, 118 12" /></svg>
+                    <span class="signal-value">7 h 20 m</span>
+                  </li>
+                  <li class="signal-row">
+                    <span class="signal-name">Water</span>
+                    <span class="signal-dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span>
+                    <span class="signal-value">5 of 8</span>
+                  </li>
+                  <li class="signal-row">
+                    <span class="signal-name">Movement</span>
+                    <svg class="spark" viewBox="0 0 120 28" aria-hidden="true"><path class="spark-line" d="M2 22 C 18 20, 26 10, 40 14 S 62 24, 76 16 S 102 6, 118 10" /></svg>
+                    <span class="signal-value">32 min</span>
+                  </li>
+                </ul>
+              </article>
+
+              <article class="app-card app-card-coach">
+                <p class="app-card-label">Coach · sample</p>
+                <p class="coach-line"><span class="coach-glyph" aria-hidden="true"></span>You've been keeping softer mornings this week. Want to hold that for the weekend too?</p>
+                <div class="coach-actions">
+                  <button class="chip chip-solid" type="button">Yes, gently</button>
+                  <button class="chip" type="button">Not now</button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="sample-note" data-reveal>Shown with sample data.</p>
+    </section>
+
+    <!-- ================= 02 · CHAPTERS ================= -->
+    <section class="chapters" id="chapters" aria-labelledby="chapters-title">
+      <h2 class="sr-only" id="chapters-title">The chapters of Bloom</h2>
+
+      <!-- 01 · Stories -->
+      <article class="chapter" id="stories" data-theme="rose">
+        <div class="chapter-copy" data-reveal>
+          <p class="chapter-kicker"><span class="kicker-num">01</span> Stories</p>
+          <h3 class="h2">Moments that stay.</h3>
+          <p class="chapter-lede">Your days leave traces — a sea morning, a song, a first quiet coffee. Stories keeps them close, for you alone. Not a feed. A keepsake.</p>
+        </div>
+        <div class="chapter-scene" data-reveal data-parallax="0.05">
+          <div class="memory-strip" aria-label="Sample memories">
+            <figure class="memory" style="--tilt:-2.4deg; --tone:var(--rose)">
+              <span class="memory-sky" aria-hidden="true"></span>
+              <figcaption><strong>Sea morning</strong><span>Kochi · March</span></figcaption>
+            </figure>
+            <figure class="memory memory-tall" style="--tilt:1.8deg; --tone:var(--peach)">
+              <span class="memory-sky" aria-hidden="true"></span>
+              <figcaption><strong>Amma's recipe, tried</strong><span>Sunday · evening</span></figcaption>
+            </figure>
+            <figure class="memory" style="--tilt:-1.2deg; --tone:var(--lilac)">
+              <span class="memory-sky" aria-hidden="true"></span>
+              <figcaption><strong>First rain run</strong><span>June · monsoon</span></figcaption>
+            </figure>
+            <figure class="memory memory-tall" style="--tilt:2.6deg; --tone:var(--sage)">
+              <span class="memory-sky" aria-hidden="true"></span>
+              <figcaption><strong>The quiet coffee</strong><span>A ritual · 7:10 am</span></figcaption>
+            </figure>
+          </div>
+        </div>
+      </article>
+
+      <!-- 02 · Mood -->
+      <article class="chapter chapter-flip" id="mood" data-theme="lilac">
+        <div class="chapter-copy" data-reveal>
+          <p class="chapter-kicker"><span class="kicker-num">02</span> Mood</p>
+          <h3 class="h2">Your inner weather.</h3>
+          <p class="chapter-lede">Some days are clear; some roll in like mist. Note it gently, and over weeks Bloom begins to show you your own climate — patterns, not judgments.</p>
+        </div>
+        <div class="chapter-scene" data-reveal data-parallax="0.05">
+          <div class="mood-scene" aria-label="Sample week of moods">
+            <div class="mood-weather" aria-hidden="true"></div>
+            <p class="mood-question">How is today arriving?</p>
+            <ul class="mood-week" aria-label="This week, gently recorded">
+              <li><i style="--m:70%"></i><span>M</span></li>
+              <li><i style="--m:55%"></i><span>T</span></li>
+              <li><i style="--m:82%"></i><span>W</span></li>
+              <li><i style="--m:48%"></i><span>T</span></li>
+              <li><i style="--m:64%"></i><span>F</span></li>
+              <li><i style="--m:90%"></i><span>S</span></li>
+              <li class="is-today"><i style="--m:60%"></i><span>S</span></li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <!-- 03 · Trackers & Health -->
+      <article class="chapter" id="trackers" data-theme="sage">
+        <div class="chapter-copy" data-reveal>
+          <p class="chapter-kicker"><span class="kicker-num">03</span> Trackers &amp; Health</p>
+          <h3 class="h2">Small signals, understood.</h3>
+          <p class="chapter-lede">Sleep, water, movement — held lightly. Bloom gathers everyday signals into one calm glance, so you notice yourself without measuring yourself to pieces.</p>
+        </div>
+        <div class="chapter-scene" data-reveal data-parallax="0.05">
+          <ul class="signal-card" aria-label="Sample daily signals">
+            <li class="signal-line"><span class="signal-dot" style="--tone:var(--lilac)"></span><span class="signal-title">Sleep</span><span class="signal-track"><i style="--v:78%"></i></span><span class="signal-num">7 h 20 m</span></li>
+            <li class="signal-line"><span class="signal-dot" style="--tone:var(--peach)"></span><span class="signal-title">Hydration</span><span class="signal-track"><i style="--v:62%"></i></span><span class="signal-num">5 of 8</span></li>
+            <li class="signal-line"><span class="signal-dot" style="--tone:var(--sage)"></span><span class="signal-title">Movement</span><span class="signal-track"><i style="--v:84%"></i></span><span class="signal-num">32 min</span></li>
+            <li class="signal-line"><span class="signal-dot" style="--tone:var(--rose)"></span><span class="signal-title">Habits</span><span class="signal-track"><i style="--v:70%"></i></span><span class="signal-num">4 of 6</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 04 · Cycle -->
+      <article class="chapter chapter-flip" id="cycle" data-theme="peach">
+        <div class="chapter-copy" data-reveal>
+          <p class="chapter-kicker"><span class="kicker-num">04</span> Cycle</p>
+          <h3 class="h2">Rhythm, not charts.</h3>
+          <p class="chapter-lede">Where you are, and what tends to come next — phrased with care. Today sits on the ring; the pace is yours, not a grid's.</p>
+        </div>
+        <div class="chapter-scene" data-reveal data-parallax="0.05">
+          <div class="cycle-scene">
+            <svg class="cycle-ring cycle-ring-large" viewBox="0 0 200 200" role="img" aria-label="Sample cycle: day 17 of 29, luteal phase">
+              <g class="cycle-ticks"></g>
+              <circle class="cycle-track" cx="100" cy="100" r="78" />
+              <circle class="cycle-arc" cx="100" cy="100" r="78" />
+              <circle class="cycle-today" cx="100" cy="22" r="5" />
+            </svg>
+            <div class="cycle-caption">
+              <p class="cycle-day">Day 17 <span class="dim">of 29</span></p>
+              <p class="cycle-phase">Luteal — the softening</p>
+              <p class="cycle-next">Next phase arrives in 5 days</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 05 · Rewards -->
+      <article class="chapter" id="rewards" data-theme="gold">
+        <div class="chapter-copy" data-reveal>
+          <p class="chapter-kicker"><span class="kicker-num">05</span> Rewards</p>
+          <h3 class="h2">Growth you can feel.</h3>
+          <p class="chapter-lede">Petals for gentle streaks, milestones worth naming, ranks that mean something to you. Progress without pressure — never a shop, never a casino.</p>
+        </div>
+        <div class="chapter-scene" data-reveal data-parallax="0.05">
+          <div class="reward-scene" aria-label="Sample progression">
+            <div class="petal-ring" role="img" aria-label="Season progress: 68 percent">
+              <span class="petal-ring-core" aria-hidden="true">✿</span>
+            </div>
+            <div class="reward-meta">
+              <p class="reward-rank">Rank · <strong>First Bloom</strong></p>
+              <p class="reward-season">Season progress — 68%</p>
+              <ul class="milestones">
+                <li class="done">Seven gentle days</li>
+                <li class="done">A first story kept</li>
+                <li>A full cycle noted</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 06 · Coach -->
+      <article class="chapter chapter-flip" id="coach" data-theme="rose">
+        <div class="chapter-copy" data-reveal>
+          <p class="chapter-kicker"><span class="kicker-num">06</span> Coach</p>
+          <h3 class="h2">A quiet word, at the right time.</h3>
+          <p class="chapter-lede">Bloom's companion notices small patterns and asks — never insists. It speaks when it helps, and stays silent when you're doing fine.</p>
+        </div>
+        <div class="chapter-scene" data-reveal data-parallax="0.05">
+          <div class="coach-card" aria-label="Sample coach message">
+            <p class="coach-card-head"><span class="coach-glyph" aria-hidden="true"></span> Bloom · just now</p>
+            <p class="coach-card-line">You've been sleeping later on weekends. Shall we keep Sundays soft, and Mondays a little earlier?</p>
+            <div class="coach-actions">
+              <button class="chip chip-solid" type="button">Yes, gently</button>
+              <button class="chip" type="button">Not now</button>
+            </div>
+            <p class="sample-note sample-note-inline">Sample conversation — responses are never faked live.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ================= 03 · LAUNCH ================= -->
+    <section class="launch" id="launch" aria-labelledby="launch-title">
+      <div class="launch-inner" data-reveal>
+        <span class="launch-mark" data-mark-slot aria-hidden="true"></span>
+        <h2 class="h2 launch-title" id="launch-title">Bloom is coming into season.</h2>
+        <p class="launch-lede">We're finishing it slowly and carefully. When the first season opens, you can be there.</p>
+        <form class="launch-form" id="launch-form" novalidate>
+          <label class="sr-only" for="launch-email">Email address</label>
+          <input id="launch-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@somewhere.in" required />
+          <button class="btn btn-primary" type="submit">Be there first</button>
+        </form>
+        <p class="launch-note" id="launch-note" role="status">This preview keeps nothing — the waitlist opens with the launch.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="site-footer">
+    <p class="footer-mark"><span data-mark-slot aria-hidden="true"></span> bloom</p>
+    <p class="footer-note">Interface shown with sample data. Bloom supports everyday wellbeing — it is not a medical device.</p>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="#today">Inside Bloom</a>
+      <a href="#chapters">Chapters</a>
+      <a href="#launch">Launch</a>
+      <a href="#top">Back to top ↑</a>
+    </nav>
+    <p class="footer-legal">© 2026 Bloom. Made with care.</p>
+  </footer>
+
+  <!-- shared paint for cycle arcs -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="bloom-cycle-gradient" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#f0c69e" />
+        <stop offset="60%" stop-color="#e8a2b4" />
+        <stop offset="100%" stop-color="#b9a6da" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <noscript>
+    <style>
+      .hero-frames, .scroll-cue { display: none; }
+      .hero-mark, .hero-copy, [data-reveal] { opacity: 1 !important; transform: none !important; }
+    </style>
+  </noscript>
+</body>
+</html>

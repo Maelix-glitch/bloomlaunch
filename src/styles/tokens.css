@@ -1,0 +1,74 @@
+/* ============================================================
+   BLOOM · DESIGN TOKENS
+   Intimate · editorial · spatial · premium.
+   One continuous world: deep warm darkness, cream ink,
+   petal accents. Fluid type, fluid space, disciplined radii.
+   ============================================================ */
+
+:root {
+  /* color — cinematic ground */
+  --bg-0: #0b0910;
+  --bg-1: #110d17;
+  --bg-2: #171120;
+  --bg-3: #1e1628;
+
+  /* color — ink */
+  --ink-0: #f6f1e9;
+  --ink-1: rgba(246, 241, 233, 0.74);
+  --ink-2: rgba(246, 241, 233, 0.52);
+  --ink-3: rgba(246, 241, 233, 0.32);
+
+  /* color — petals (accent family) */
+  --rose:  #e8a2b4;
+  --peach: #f0c69e;
+  --lilac: #b9a6da;
+  --sage:  #a3c29e;
+  --gold:  #e3c37f;
+
+  /* color — structure */
+  --hairline: rgba(246, 241, 233, 0.10);
+  --hairline-strong: rgba(246, 241, 233, 0.18);
+  --card: rgba(246, 241, 233, 0.035);
+  --card-2: rgba(246, 241, 233, 0.06);
+
+  /* type */
+  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --font-text: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* fluid type scale */
+  --step--1: clamp(0.8rem, 0.76rem + 0.2vw, 0.9rem);
+  --step-0:  clamp(0.95rem, 0.88rem + 0.35vw, 1.1rem);
+  --step-1:  clamp(1.1rem, 0.98rem + 0.6vw, 1.35rem);
+  --step-2:  clamp(1.4rem, 1.15rem + 1.3vw, 2rem);
+  --step-3:  clamp(1.9rem, 1.4rem + 2.6vw, 3.1rem);
+  --step-4:  clamp(2.5rem, 1.6rem + 4.6vw, 4.6rem);
+  --step-5:  clamp(2.9rem, 1.5rem + 7vw, 7rem);
+
+  /* fluid space scale */
+  --sp-1: clamp(0.5rem, 0.45rem + 0.25vw, 0.75rem);
+  --sp-2: clamp(0.85rem, 0.75rem + 0.5vw, 1.25rem);
+  --sp-3: clamp(1.3rem, 1.1rem + 1vw, 2rem);
+  --sp-4: clamp(2rem, 1.6rem + 2vw, 3.5rem);
+  --sp-5: clamp(3rem, 2.2rem + 4vw, 6rem);
+  --sp-6: clamp(4.5rem, 3rem + 7.5vw, 10rem);
+
+  /* radii — one disciplined family */
+  --r-s: 10px;
+  --r-m: 16px;
+  --r-l: 22px;
+  --r-xl: 30px;
+
+  /* motion language — the "bloom settle" */
+  --ease-bloom: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.45, 0, 0.2, 1);
+  --dur-1: 0.45s;
+  --dur-2: 0.9s;
+  --dur-3: 1.6s;
+
+  /* layout */
+  --measure: 62ch;
+  --page-pad: clamp(1.25rem, 0.7rem + 3vw, 4rem);
+  --nav-h: 64px;
+
+  color-scheme: dark;
+}
