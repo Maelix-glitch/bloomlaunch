@@ -10,12 +10,14 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 5174,
     allowedHosts: true,
   },
   preview: {
+    // the live preview serves the BUILT bundle (one CSS + one JS file) —
+    // far more robust through the sandbox proxy than the dev module graph
     host: '0.0.0.0',
-    port: 4173,
+    port: 5173,
     allowedHosts: true,
   },
   build: {
