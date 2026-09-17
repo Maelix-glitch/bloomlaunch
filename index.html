@@ -37,9 +37,10 @@
   <main id="main">
 
     <!-- ================= 00 · OVERTURE ================= -->
-    <!-- The authored film: darkness → Mac + glowing mark → the mark
-         blooms → product windows rise → final hold. Scroll then
-         becomes the camera and hands the visitor into Bloom. -->
+    <!-- Logo first. Then scroll is the playhead: the authored film
+         runs from its first frame to its last as you scroll, and
+         the overture hands you into Bloom. -->
+
     <section class="hero" id="overture" aria-label="Bloom — opening scene">
       <div class="hero-sticky">
 
@@ -51,7 +52,7 @@
         <!-- camera rig: everything inside dollies together on scroll -->
         <div class="hero-rig">
 
-          <!-- the prepared reveal: authored frames, canvas playback -->
+          <!-- the authored film: scrubbed by scroll, frame 1 → final frame -->
           <canvas class="hero-frames" id="hero-frames" aria-hidden="true"></canvas>
 
           <!-- staged scene: faithful fallback when footage is absent -->
@@ -95,27 +96,22 @@
             <div class="mac-floorlight"></div>
           </div>
 
-          <!-- mark beat: used only when footage is absent; the film
-               carries its own mark when frames are live -->
-          <div class="mark-slot" id="hero-mark-slot">
+          <!-- logo-first composition: the real Bloom mark opens the page -->
+          <div class="hero-center">
             <span class="hero-mark" data-mark-slot data-mark-size="hero"></span>
-          </div>
-        </div>
-
-        <!-- editorial copy arrives as the film rests -->
-        <div class="hero-copy">
-          <p class="eyebrow">Bloom for Mac · coming into season</p>
-          <h1 class="display">Your life,<br /><em>in bloom.</em></h1>
-          <p class="lede">A calmer you, a brighter tomorrow.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#today">Enter Bloom</a>
-            <a class="btn btn-ghost" href="#chapters">The chapters</a>
+            <p class="eyebrow">Bloom for Mac · coming into season</p>
+            <h1 class="display">Your life,<br /><em>in bloom.</em></h1>
+            <p class="lede">A calmer you, a brighter tomorrow.</p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#today">Enter Bloom</a>
+              <a class="btn btn-ghost" href="#chapters">The chapters</a>
+            </div>
           </div>
         </div>
 
         <div class="scroll-cue" aria-hidden="true"><span class="scroll-cue-line"><span class="scroll-cue-dot"></span></span></div>
 
-        <p class="sr-only">A dark stage brightens around a laptop. The Bloom mark glows on its screen, blossoms into petals of light, and the app's own windows rise around it. Scrolling moves the camera closer, into the product.</p>
+        <p class="sr-only">The Bloom mark settles centre stage above the title. As you scroll, the opening film plays from its very first frame to its last — your scroll is the playhead — and the scene hands you into Bloom.</p>
       </div>
     </section>
 
@@ -297,8 +293,10 @@
 
   <noscript>
     <style>
+      .hero { height: auto; }
+      .hero-sticky { position: relative; }
       .hero-frames, .scroll-cue { display: none; }
-      .hero-mark, .hero-copy, [data-reveal] { opacity: 1 !important; transform: none !important; translate: 0 0 !important; }
+      .hero-center > *, [data-reveal] { opacity: 1 !important; transform: none !important; translate: 0 0 !important; }
     </style>
   </noscript>
 </body>

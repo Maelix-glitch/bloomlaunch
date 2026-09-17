@@ -1,25 +1,21 @@
 /* ============================================================
-   BLOOM · FRAME SEQUENCE PLAYER
-   Plays the authored "prepared reveal" (public/frames/):
-   192 × 1920×1080 WebP @ 24fps — an 8-second film.
+   BLOOM · FRAME SEQUENCE PLAYER (scroll-scrubbed)
+   The authored "prepared reveal" (public/frames/):
+   192 × 1920×1080 WebP @ 24fps.
+
+   The visitor's scroll IS the playhead: `seek(frameIndex)` is
+   called from the hero's scroll handler, so the film runs from
+   its first frame to its last at the pace of the reader — no
+   autoplay, no hijacked scrolling.
 
    Memory discipline (the core constraint at this frame count):
-     · decoded bitmaps live in a SLIDING WINDOW:
-       [current - KEEP_BEHIND … current + LOOKAHEAD]
-       everything older is closed and released
-     · bitmaps are decoded at DISPLAY size (capped at the source
-       resolution, never upscaled), so a 1080p asset rendered in a
-       900px hero never occupies 1080p of RAM
-     · low-memory devices (navigator.deviceMemory ≤ 4) decode at a
-       lower cap
-     · after the first full play only the final frame is kept —
-       the reveal rests on its ending
-
-   Playback discipline:
-     · linear playback only; scroll never scrubs the film, it
-       moves the camera around its final frame
-     · pauses off-screen and when the tab hides
-     · a broken frame is skipped, never fatal
+     · decoded bitmaps live in a SLIDING WINDOW around the
+       playhead; everything outside it is closed and released
+     · bitmaps decode at DISPLAY size (capped, never upscaled)
+     · low-memory devices (navigator.deviceMemory ≤ 4) decode at
+       a lower cap
+     · a broken frame is skipped, never fatal; the nearest good
+       frame is drawn so scrubbing never flashes black
    ============================================================ */
 
 export interface FrameManifest {
@@ -34,14 +30,12 @@ export interface FrameManifest {
 }
 
 interface PlayerHooks {
-  onReady: () => void;          // first frames decoded — safe to fade in
-  onUnavailable: () => void;    // no manifest → staged scene carries on
-  onEnded: () => void;          // holding the final frame
+  onReady: () => void;          // first window decoded — safe to reveal
+  onUnavailable: () => void;    // no manifest / nothing decoded → fallback
 }
 
-const LOOKAHEAD = 24;
-const KEEP_BEHIND = 2;
-const READY_FRAMES = 4;
+const LOOKAHEAD = 18;
+const KEEP_BEHIND = 6;
 
 type Decoded = ImageBitmap | HTMLImageElement;
 
@@ -56,10 +50,9 @@ export class FrameSequencePlayer {
   private destroyed = false;
 
   private currentFrame = -1;
-  private playing = false;
-  private playedOnce = false;
-  private rafId: number | null = null;
-  private playStart = 0;
+  private lastSeek = 0;
+  private waveTarget = 0;
+  private waveInFlight = false;
 
   private resizeObserver: ResizeObserver | null = null;
   private maxDecodeWidth = 1920;
@@ -70,11 +63,15 @@ export class FrameSequencePlayer {
     this.hooks = hooks;
   }
 
+  get frameCount(): number {
+    return this.manifest?.count ?? 0;
+  }
+
   /* ---------- lifecycle ---------- */
 
   /**
-   * @param prioritizeFinal reduced-motion mode: decode the last frame
-   * first because the experience shows one composed still.
+   * @param prioritizeFinal reduced-motion mode: the experience is one
+   * composed still, so decode the last frame first.
    */
   async init(prioritizeFinal = false): Promise<void> {
     let manifest: FrameManifest;
@@ -95,11 +92,11 @@ export class FrameSequencePlayer {
     }
 
     this.manifest = {
-      prefix: manifest.prefix ?? 'frame_',
-      pad: manifest.pad ?? 4,
-      ext: manifest.ext ?? 'webp',
-      start: manifest.start ?? 1,
-      fps: manifest.fps ?? 30,
+      prefix: 'frame_',
+      pad: 4,
+      ext: 'webp',
+      start: 1,
+      fps: 30,
       ...manifest,
     };
 
@@ -112,7 +109,12 @@ export class FrameSequencePlayer {
     if (prioritizeFinal) {
       await this.decode(manifest.count - 1);
     } else {
-      await this.fillWindow(0);
+      // first window: frame 1 + the stretch just ahead, so the first
+      // scroll input has frames to land on
+      const to = Math.min(manifest.count - 1, LOOKAHEAD);
+      const jobs: Promise<void>[] = [];
+      for (let i = 0; i <= to; i += 1) jobs.push(this.decode(i));
+      await Promise.all(jobs);
     }
     if (this.destroyed) return;
 
@@ -127,19 +129,89 @@ export class FrameSequencePlayer {
 
   destroy(): void {
     this.destroyed = true;
-    this.stop();
     this.resizeObserver?.disconnect();
     this.releaseAllExcept(-1);
+  }
+
+  /* ---------- scrubbing ---------- */
+
+  /** Scroll is the playhead: show `index` (or the nearest decoded frame). */
+  seek(rawIndex: number): void {
+    const m = this.manifest;
+    if (!m || this.destroyed) return;
+    const target = Math.max(0, Math.min(m.count - 1, Math.round(rawIndex)));
+    this.lastSeek = target;
+
+    const bmp = this.bitmaps[target];
+    if (bmp) {
+      if (target !== this.currentFrame) this.drawFrame(target);
+      this.trimAround(target);
+    } else {
+      this.drawNearest(target);
+    }
+    void this.wave(target);
+  }
+
+  /** Reduced motion / the resting state: one composed still (the film's ending). */
+  showFinal(): void {
+    const m = this.manifest;
+    if (!m || this.destroyed) return;
+    const last = m.count - 1;
+    this.lastSeek = last;
+    if (this.bitmaps[last]) {
+      this.drawFrame(last);
+      this.releaseAllExcept(last);
+      return;
+    }
+    void this.decode(last).then(() => {
+      if (!this.destroyed && this.bitmaps[last]) {
+        this.drawFrame(last);
+        this.releaseAllExcept(last);
+      }
+    });
+  }
+
+  /* ---------- decode wave: keep a window around the playhead ---------- */
+
+  private async wave(target: number): Promise<void> {
+    this.waveTarget = target;
+    if (this.waveInFlight || this.destroyed) return;
+    this.waveInFlight = true;
+
+    try {
+      while (!this.destroyed) {
+        const t = this.waveTarget;
+        const m = this.manifest as FrameManifest;
+        const from = Math.max(0, t - KEEP_BEHIND);
+        const to = Math.min(m.count - 1, t + LOOKAHEAD);
+        const jobs: Promise<void>[] = [];
+        for (let i = from; i <= to; i += 1) {
+          if (!this.bitmaps[i] && !this.pending[i]) jobs.push(this.decode(i));
+        }
+        if (jobs.length > 0) await Promise.all(jobs);
+        if (this.destroyed) break;
+
+        const bmp = this.bitmaps[t];
+        if (bmp) {
+          if (t !== this.currentFrame) this.drawFrame(t);
+          this.trimAround(t);
+          if (t === this.lastSeek) break;
+        } else {
+          this.drawNearest(t);
+        }
+        // if the reader scrolled on while we decoded, chase the new target
+        if (t === this.waveTarget) break;
+      }
+    } finally {
+      this.waveInFlight = false;
+    }
   }
 
   /* ---------- sizing ---------- */
 
   private computeDecodeCap(): void {
-    const lowMemory =
-      typeof navigator !== 'undefined' &&
-      'deviceMemory' in navigator &&
-      (navigator as Navigator & { deviceMemory?: number }).deviceMemory !== undefined &&
-      ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) <= 4;
+    const nav = typeof navigator !== 'undefined' ? (navigator as Navigator & { deviceMemory?: number }) : null;
+    const lowMemory = !!nav && 'deviceMemory' in nav && nav.deviceMemory !== undefined && nav.deviceMemory <= 4;
     this.maxDecodeWidth = lowMemory ? 1280 : 1920;
   }
 
@@ -166,7 +238,7 @@ export class FrameSequencePlayer {
   private frameUrl(index: number): string {
     const m = this.manifest as FrameManifest;
     const n = (m.start ?? 1) + index;
-    return `/frames/${m.prefix}${String(n).padStart(m.pad ?? 4, '0')}.${m.ext}`;
+    return `/frames/${m.prefix ?? 'frame_'}${String(n).padStart(m.pad ?? 4, '0')}.${m.ext ?? 'webp'}`;
   }
 
   private async decode(index: number): Promise<void> {
@@ -218,24 +290,13 @@ export class FrameSequencePlayer {
     if (bmp && 'close' in bmp) bmp.close();
   }
 
-  /* ---------- sliding window ---------- */
+  /* ---------- window & drawing ---------- */
 
-  /** Decode [from … from+LOOKAHEAD], dropping anything older. */
-  private async fillWindow(from: number): Promise<void> {
-    const m = this.manifest as FrameManifest;
-    const jobs: Promise<void>[] = [];
-    for (let i = from; i < Math.min(m.count, from + LOOKAHEAD); i += 1) {
-      if (!this.bitmaps[i] && !this.pending[i]) jobs.push(this.decode(i));
-    }
-    // a handful resolves the "ready" gate quickly
-    await Promise.all(jobs.slice(0, READY_FRAMES));
-    void Promise.all(jobs);
-    this.trimBehind(from);
-  }
-
-  private trimBehind(current: number): void {
-    const cut = Math.max(0, current - KEEP_BEHIND);
-    for (let i = 0; i < cut; i += 1) {
+  private trimAround(center: number): void {
+    const from = Math.max(0, center - KEEP_BEHIND);
+    const to = center + LOOKAHEAD;
+    for (let i = 0; i < this.bitmaps.length; i += 1) {
+      if (i >= from && i <= to) continue;
       const bmp = this.bitmaps[i] ?? null;
       if (bmp) {
         this.close(bmp);
@@ -253,7 +314,22 @@ export class FrameSequencePlayer {
     });
   }
 
-  /* ---------- drawing ---------- */
+  /** Nearest decoded frame to `target` — scrubbing never flashes black. */
+  private drawNearest(target: number): void {
+    const m = this.manifest as FrameManifest;
+    for (let r = 0; r <= 48; r += 1) {
+      const before = target - r;
+      const after = target + r;
+      if (before >= 0 && this.bitmaps[before]) {
+        this.drawFrame(before);
+        return;
+      }
+      if (after <= m.count - 1 && this.bitmaps[after]) {
+        this.drawFrame(after);
+        return;
+      }
+    }
+  }
 
   private drawFrame(index: number): void {
     const ctx = this.ctx;
@@ -275,70 +351,4 @@ export class FrameSequencePlayer {
     ctx.drawImage(bmp, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     this.currentFrame = index;
   }
-
-  /** Reduced motion: one composed still (the film's ending). */
-  showFinal(): void {
-    const m = this.manifest;
-    if (!m) return;
-    const last = m.count - 1;
-    if (this.bitmaps[last]) this.drawFrame(last);
-  }
-
-  /* ---------- playback ---------- */
-
-  play(): void {
-    const m = this.manifest;
-    if (!m || this.playing || this.destroyed) return;
-    if (this.playedOnce) {
-      // after the first telling, the story rests on its final frame
-      this.drawFrame(m.count - 1);
-      return;
-    }
-    this.playing = true;
-    this.playStart = performance.now();
-    void this.fillWindow(0);
-    this.rafId = requestAnimationFrame(this.tick);
-  }
-
-  pause(): void {
-    this.stop();
-  }
-
-  private stop(): void {
-    this.playing = false;
-    if (this.rafId !== null) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-    }
-  }
-
-  private tick = (now: number): void => {
-    const m = this.manifest;
-    if (!m || !this.playing) return;
-
-    const fps = m.fps ?? 30;
-    const elapsed = (now - this.playStart) / 1000;
-    const target = Math.min(m.count - 1, Math.floor(elapsed * fps));
-
-    // keep the window ahead of the playhead
-    void this.fillWindow(target);
-
-    // newest decoded frame at or before the playhead
-    let index = target;
-    while (index > 0 && !this.bitmaps[index]) index -= 1;
-    if (this.bitmaps[index] && index !== this.currentFrame) {
-      this.drawFrame(index);
-      this.trimBehind(index);
-    }
-
-    if (target >= m.count - 1 && this.bitmaps[m.count - 1]) {
-      this.drawFrame(m.count - 1);
-      this.stop();
-      this.playedOnce = true;
-      this.releaseAllExcept(m.count - 1);
-      this.hooks.onEnded();
-      return;
-    }
-    this.rafId = requestAnimationFrame(this.tick);
-  };
 }

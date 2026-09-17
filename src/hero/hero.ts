@@ -1,17 +1,19 @@
 /* ============================================================
    BLOOM · OVERTURE DIRECTOR
 
-   The authored footage IS the opening film:
-     darkness → anticipation glow → the film fades in (frame 1 is
-     already "Mac + glowing Bloom mark") → the mark blooms and the
-     product windows rise → the film rests on its final frame →
-     editorial copy arrives → scroll becomes the camera and hands
-     the visitor into Bloom (#today).
+   Logo first: the real Bloom mark settles centre stage with the
+   title, on the glow — never a black void.
 
-   When the footage is absent (assets not deployed), the staged
-   scene carries the same beats: mark descends, Mac rises.
+   Then scroll is the playhead: as the visitor scrolls, the
+   authored film runs from its FIRST frame to its LAST
+   (seek driven by scroll progress), the logo recedes, and the
+   overture hands the visitor into Bloom (#today).
 
-   Nothing hijacks native scrolling; transform/opacity only.
+   No autoplay, no timers on the film, no scroll hijacking —
+   transform/opacity only.
+
+   When the footage is absent, the staged scene carries the same
+   composition as a static fallback.
    ============================================================ */
 
 import { FrameSequencePlayer } from './frames';
@@ -21,7 +23,7 @@ interface HeroNodes {
   hero: HTMLElement;
   sticky: HTMLElement;
   rig: HTMLElement;
-  copy: HTMLElement;
+  center: HTMLElement;
   cue: HTMLElement;
   canvas: HTMLCanvasElement;
   stage: HTMLElement;
@@ -31,129 +33,103 @@ const nodes = (): HeroNodes | null => {
   const hero = document.querySelector<HTMLElement>('#overture');
   const sticky = hero?.querySelector<HTMLElement>('.hero-sticky');
   const rig = hero?.querySelector<HTMLElement>('.hero-rig');
-  const copy = hero?.querySelector<HTMLElement>('.hero-copy');
+  const center = hero?.querySelector<HTMLElement>('.hero-center');
   const cue = hero?.querySelector<HTMLElement>('.scroll-cue');
   const canvas = hero?.querySelector<HTMLCanvasElement>('#hero-frames');
   const stage = hero?.querySelector<HTMLElement>('.stage');
-  if (!hero || !sticky || !rig || !copy || !cue || !canvas || !stage) return null;
-  return { hero, sticky, rig, copy, cue, canvas, stage };
+  if (!hero || !sticky || !rig || !center || !cue || !canvas || !stage) return null;
+  return { hero, sticky, rig, center, cue, canvas, stage };
 };
+
+/* ---------- scrub choreography constants ---------- */
+
+const FILM_IN_AT = 0.06;      // canvas starts fading in
+const FILM_IN_SPAN = 0.12;
+const LOGO_OUT_AT = 0.05;     // logo + copy recede as the film arrives
+const LOGO_OUT_SPAN = 0.18;
+const SCRUB_AT = 0.07;        // scroll progress mapped to frame 1
+const SCRUB_SPAN = 0.79;      // …through the final frame
+const HANDOFF_AT = 0.72;      // overture recedes, #today arrives
+const HANDOFF_SPAN = 0.28;
 
 export function initHero(): void {
   const n = nodes();
   if (!n) return;
 
-  let player: FrameSequencePlayer | null = null;
-  let framesLive = false;
-  let sequenceDone = false;
-  let copyShown = false;
-
-  const showCopy = (): void => {
-    if (copyShown) return;
-    copyShown = true;
-    n.hero.classList.add('is-copy');
-  };
-
-  /* ---------- staged fallback beats (no footage) ---------- */
-
-  const stagedBeats = (): void => {
-    window.setTimeout(() => n.hero.classList.add('is-mark'), 620);
-    window.setTimeout(() => n.hero.classList.add('is-settled'), 1900);
-    window.setTimeout(() => {
-      n.hero.classList.add('is-revealing');
-      n.stage.classList.add('is-lit');
-    }, 2450);
-    window.setTimeout(showCopy, 3300);
-  };
-
-  /* ---------- footage beats ---------- */
-
-  const footageBeats = (): void => {
-    window.setTimeout(() => {
-      framesLive = true;
-      n.hero.classList.add('has-frames', 'is-revealing');
-      n.canvas.classList.add('is-live');
-      n.stage.classList.add('is-hidden');
-      player?.play();
-    }, 500);
-  };
-
+  /* ---------- reduced motion: composed still, no travel ---------- */
   if (prefersReducedMotion()) {
-    // Composed still: the film's ending, copy present, no travel.
-    n.hero.classList.add('is-anticipating', 'is-revealing');
-    player = new FrameSequencePlayer(n.canvas, {
+    n.hero.classList.add('is-static', 'is-loaded');
+    const still = new FrameSequencePlayer(n.canvas, {
       onReady: () => {
-        framesLive = true;
-        n.hero.classList.add('has-frames');
         n.canvas.classList.add('is-live');
-        n.stage.classList.add('is-hidden');
-        player?.showFinal();
-        showCopy();
+        still.showFinal();
       },
-      onUnavailable: () => {
-        n.hero.classList.add('is-settled');
-        n.stage.classList.add('is-lit');
-        showCopy();
-      },
-      onEnded: () => showCopy(),
+      onUnavailable: () => n.stage.classList.add('is-lit'),
     });
-    void player.init(true);
-  } else {
-    window.setTimeout(() => n.hero.classList.add('is-anticipating'), 120);
-
-    player = new FrameSequencePlayer(n.canvas, {
-      onReady: footageBeats,
-      onUnavailable: stagedBeats,
-      onEnded: () => {
-        sequenceDone = true;
-        showCopy();
-      },
-    });
-    void player.init();
-
-    const visibility = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!framesLive) continue;
-          if (entry.isIntersecting && !sequenceDone) player?.play();
-          else player?.pause();
-        }
-      },
-      { threshold: 0.05 },
-    );
-    visibility.observe(n.hero);
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) player?.pause();
-    });
+    void still.init(true);
+    return;
   }
 
-  /* ---------- scroll camera ---------- */
+  /* ---------- film player ---------- */
+
+  let framesReady = false;
+  const player = new FrameSequencePlayer(n.canvas, {
+    onReady: () => {
+      framesReady = true;
+      n.hero.classList.add('has-frames');
+    },
+    onUnavailable: () => {
+      n.hero.classList.add('is-fallback');
+      n.stage.classList.add('is-lit');
+    },
+  });
+  void player.init();
+
+  // entrance: the logo beat settles in once
+  window.setTimeout(() => n.hero.classList.add('is-loaded'), 90);
+
+  /* ---------- scroll camera: scroll IS the playhead ---------- */
 
   let vh = window.innerHeight;
+  let heroH = n.hero.offsetHeight;
   let ticking = false;
 
   const applyScroll = (): void => {
     ticking = false;
     const top = n.hero.getBoundingClientRect().top;
-    const total = n.hero.offsetHeight - vh;
+    const total = heroH - vh;
     if (total <= 0) return;
     const p = clamp01(-top / total);
 
-    if (!prefersReducedMotion()) {
-      n.rig.style.transform = `scale(${(1 + p * 0.09).toFixed(4)}) translateY(${(p * -3.5).toFixed(3)}%)`;
-      if (p > 0) {
-        n.copy.style.opacity = clamp01(1 - p * 2.6).toFixed(3);
-        n.cue.style.opacity = clamp01(0.85 - p * 5).toFixed(3);
-      } else {
-        // leave the class-driven entrance choreography untouched
-        n.copy.style.opacity = '';
-        n.cue.style.opacity = '';
+    if (p === 0) {
+      // at rest: leave the CSS entrance choreography untouched
+      n.canvas.style.opacity = '';
+      n.center.style.opacity = '';
+      n.center.style.transform = '';
+      n.rig.style.transform = '';
+    } else {
+      // the film fades in as the logo recedes
+      if (framesReady) {
+        n.canvas.style.opacity = clamp01((p - FILM_IN_AT) / FILM_IN_SPAN).toFixed(3);
+
+        // scroll is the playhead: frame 1 → final frame
+        const scrub = clamp01((p - SCRUB_AT) / SCRUB_SPAN);
+        player.seek(scrub * (player.frameCount - 1));
       }
+
+      const logoOut = clamp01((p - LOGO_OUT_AT) / LOGO_OUT_SPAN);
+      n.center.style.opacity = (1 - logoOut).toFixed(3);
+      n.center.style.transform = `translateY(${(logoOut * -4).toFixed(2)}%)`;
+
+      // a gentle dolly as the reader moves
+      n.rig.style.transform = `scale(${(1 + p * 0.06).toFixed(4)}) translateY(${(p * -2.4).toFixed(3)}%)`;
     }
 
+    // scroll cue dims immediately
+    n.cue.style.opacity = p < 0.02 ? '' : clamp01(0.85 - p * 6).toFixed(3);
+
     // hand-off into Bloom: the overture recedes as #today arrives
-    const fade = clamp01((p - 0.72) / 0.28);
+    const fade = clamp01((p - HANDOFF_AT) / HANDOFF_SPAN);
     n.sticky.style.opacity = (1 - fade).toFixed(3);
     n.sticky.style.transform = fade > 0 ? `scale(${(1 + fade * 0.05).toFixed(4)})` : '';
   };
@@ -169,18 +145,22 @@ export function initHero(): void {
     'resize',
     () => {
       vh = window.innerHeight;
+      heroH = n.hero.offsetHeight;
       requestApply();
     },
     { passive: true },
   );
   requestApply();
 
+  // if the visitor flips on reduced motion mid-session, settle the scene
   onReducedMotionChange((nowReduced) => {
-    if (nowReduced) {
-      n.rig.style.transform = '';
-      n.copy.style.opacity = '';
-      n.cue.style.opacity = '';
-      showCopy();
-    }
+    if (!nowReduced) return;
+    n.hero.classList.add('is-static', 'is-loaded');
+    n.canvas.style.opacity = '';
+    n.center.style.opacity = '';
+    n.center.style.transform = '';
+    n.rig.style.transform = '';
+    n.canvas.classList.add('is-live');
+    player.showFinal();
   });
 }

@@ -3,8 +3,8 @@
    Runs the REAL built bundle (dist/) in a fresh DOM under three
    scenarios, asserting the hero state machine — not just markup:
      offline  → staged-scene fallback carries the hero
-     footage  → film lights, plays to the end, copy arrives
-     reduced  → composed final frame + copy, no travel
+     footage  → player reaches ready (scroll can scrub), entrance runs
+     reduced  → composed final frame, static composition
    Run: npm run build && npm run smoke
    ============================================================ */
 import { JSDOM } from 'jsdom';
@@ -91,10 +91,18 @@ async function runScenario(mode) {
     errors.push('BUNDLE THROW: ' + (err?.stack || err));
   }
 
-  // settle: entrance beats + full film playback
+  // settle: wait for the scenario's terminal hero state
   const hero = window.document.querySelector('#overture');
-  const deadline = Date.now() + 20000;
-  while (Date.now() < deadline && !(hero?.classList.contains('is-copy'))) {
+  const readyFor = {
+    offline: () => hero.classList.contains('is-fallback') && hero.classList.contains('is-loaded'),
+    footage: () => hero.classList.contains('has-frames') && hero.classList.contains('is-loaded'),
+    reduced: () =>
+      window.document.querySelector('#hero-frames')?.classList.contains('is-live') ||
+      !!window.document.querySelector('.stage.is-lit'),
+  };
+  const isReady = readyFor[mode];
+  const deadline = Date.now() + 15000;
+  while (Date.now() < deadline && !isReady()) {
     await new Promise((r) => setTimeout(r, 25));
   }
   await new Promise((r) => setTimeout(r, 100));
@@ -107,30 +115,33 @@ const results = [];
 /* ---------- scenario: offline → staged fallback carries the hero ---------- */
 {
   const { doc, errors } = await runScenario('offline');
+  const hero = doc.querySelector('#overture');
+  results.push(['offline: fallback state', hero?.classList.contains('is-fallback') ?? false]);
   results.push(['offline: staged scene lit', doc.querySelector('.stage')?.classList.contains('is-lit') ?? false]);
-  results.push(['offline: copy shown', doc.querySelector('#overture')?.classList.contains('is-copy') ?? false]);
+  results.push(['offline: entrance ran', hero?.classList.contains('is-loaded') ?? false]);
   results.push(['offline: provisional mark injected', doc.querySelectorAll('[data-mark-slot][data-provisional]').length >= 4]);
   results.push(['offline: no runtime errors', errors.length === 0]);
   if (errors.length) console.log('  errors:', errors.join(' | '));
 }
 
-/* ---------- scenario: footage live → film lights, plays, ends ---------- */
+/* ---------- scenario: footage → player ready, scroll can scrub ---------- */
 {
   const { doc, errors } = await runScenario('footage');
   const hero = doc.querySelector('#overture');
-  results.push(['footage: hero has-frames', hero?.classList.contains('has-frames') ?? false]);
-  results.push(['footage: canvas is-live', doc.querySelector('#hero-frames')?.classList.contains('is-live') ?? false]);
-  results.push(['footage: staged scene hidden', doc.querySelector('.stage')?.classList.contains('is-hidden') ?? false]);
-  results.push(['footage: film ended → copy shown', hero?.classList.contains('is-copy') ?? false]);
+  results.push(['footage: onReady fired (has-frames)', hero?.classList.contains('has-frames') ?? false]);
+  results.push(['footage: no fallback class', !(hero?.classList.contains('is-fallback') ?? true)]);
+  results.push(['footage: entrance ran', hero?.classList.contains('is-loaded') ?? false]);
+  results.push(['footage: logo-first composition present', !!doc.querySelector('.hero-center .hero-mark')]);
   results.push(['footage: no runtime errors', errors.length === 0]);
   if (errors.length) console.log('  errors:', errors.join(' | '));
 }
 
-/* ---------- scenario: reduced motion → composed still + copy ---------- */
+/* ---------- scenario: reduced motion → composed still ---------- */
 {
   const { doc, errors } = await runScenario('reduced');
-  results.push(['reduced: canvas is-live (final frame)', doc.querySelector('#hero-frames')?.classList.contains('is-live') ?? false]);
-  results.push(['reduced: copy shown', doc.querySelector('#overture')?.classList.contains('is-copy') ?? false]);
+  const hero = doc.querySelector('#overture');
+  results.push(['reduced: static composition', hero?.classList.contains('is-static') ?? false]);
+  results.push(['reduced: final frame on canvas', doc.querySelector('#hero-frames')?.classList.contains('is-live') ?? false]);
   results.push(['reduced: no runtime errors', errors.length === 0]);
   if (errors.length) console.log('  errors:', errors.join(' | '));
 }
