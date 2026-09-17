@@ -250,6 +250,10 @@
 /* provisional-mark marker: subtle dotted halo so QA can spot stand-ins */
 [data-mark-slot][data-provisional] svg { opacity: 0.96; }
 
+/* when the authored film is live it carries its own mark;
+   the page-level mark slot would only compete with it */
+.hero.has-frames .mark-slot { display: none; }
+
 /* ---------- hero copy ---------- */
 
 .hero-copy {

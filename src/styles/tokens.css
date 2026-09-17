@@ -18,12 +18,14 @@
   --ink-2: rgba(246, 241, 233, 0.52);
   --ink-3: rgba(246, 241, 233, 0.32);
 
-  /* color — petals (accent family) */
-  --rose:  #e8a2b4;
+  /* color — petals (accent family, sampled from the authored
+     footage & shipped screens: violet primary, sage→gold mark,
+     rose for cycle, gold for rewards) */
+  --rose:  #d989a8;
   --peach: #f0c69e;
-  --lilac: #b9a6da;
-  --sage:  #a3c29e;
-  --gold:  #e3c37f;
+  --lilac: #a78bfa;
+  --sage:  #a8c8a0;
+  --gold:  #e8c47c;
 
   /* color — structure */
   --hairline: rgba(246, 241, 233, 0.10);

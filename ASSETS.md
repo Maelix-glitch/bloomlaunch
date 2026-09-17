@@ -1,37 +1,20 @@
-# BloomCinematicHero → bloomlaunch asset contract
+# Production assets — Bloom cinematic hero
 
-The production source material lives in `BloomCinematicHero` on the creative
-machine. This site consumes it through two drop-in points — nothing else in
-the experience needs to change when assets arrive.
+All production assets live in `public/` (served at root by Vite, copied into `dist/` as-is).
 
-| Source material            | Drop into          | Consumed by                                        |
-| -------------------------- | ------------------ | -------------------------------------------------- |
-| `frames\` finished reveal  | `public/frames/`   | `src/hero/frames.ts` (canvas sequence player)      |
-| real Bloom logo / icon     | `public/logo/`     | `src/hero/mark.ts` (hero, nav, launch, favicon)    |
-| share card (optional)      | `public/logo/og.jpg` | Open Graph tags                                  |
+| Path | Content | Source |
+| --- | --- | --- |
+| `public/frames/bloom_0001.webp … bloom_0192.webp` | 192 rendered frames, 1920×1080, WebP | exported cinematic sequence (`BloomCinematicHero/frames`) |
+| `public/frames/frames.json` | original manifest (name pattern, fps, size) | export tooling |
+| `public/frames/manifest.json` | extended manifest read by `src/hero/frames.ts` (adds start/count) | generated during integration |
+| `public/product/hero-01-home.png … hero-10-dashboard.png` | nine 2880×1800 UI captures of the real app | real Bloom screens |
+| `public/logo/bloom-mark.png` | the exact squircle Bloom app icon, cropped from the first cinematic frame | `bloom_0001.webp` (crop only — never redrawn) |
+| `public/bloom-still.webp` | mid-shot frame used for og/share previews | frame 100 |
 
-## Frames
+## Ground rules
 
-1. Copy the finished frames into `public/frames/`.
-2. Add `public/frames/manifest.json` (see `public/frames/README.md`).
-3. The overture fades the canvas in over the staged scene and plays the
-   sequence once; the final frame hands off to the scroll camera.
-
-Until both exist, the hero intentionally keeps its staged composition —
-darkness, glow, settling mark, physically lit Mac — so the emotional arc is
-never blocked by missing footage.
-
-## Logo
-
-Drop `bloom-mark.svg` (preferred) or `bloom-mark.png` into `public/logo/`.
-The supplied mark is used as-is everywhere; it is never redrawn. Until it
-arrives, a provisional glyph is flagged with `data-provisional` so QA can
-verify the swap in one search.
-
-## What must NOT change when assets arrive
-
-- The beat timing of the overture (mark settle → reveal → copy).
-- The scroll camera path into Bloom.
-- All copy, chapters, accessibility and reduced-motion behavior.
-
-Asset arrival is a fidelity upgrade, not a redesign.
+- These are the source of truth. Do not redraw, redesign, or substitute any of them.
+- The hero plays the real frame sequence; the DOM "Mac + mini app" mock renders only
+  as a fallback if the sequence cannot load.
+- Do not commit anything not listed here; the sequence is ~15 MB of committed bytes
+  by design (it is the product).

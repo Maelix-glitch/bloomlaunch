@@ -1,22 +1,25 @@
 /* ============================================================
    BLOOM · FRAME SEQUENCE PLAYER
-   Plays the authored "prepared reveal" from public/frames/.
+   Plays the authored "prepared reveal" (public/frames/):
+   192 × 1920×1080 WebP @ 24fps — an 8-second film.
 
-   Contract (see ASSETS.md):
-     /frames/manifest.json →
-       { prefix, pad, ext, start, count, fps, width, height }
-       URLs resolve to /frames/{prefix}{index-padded}.{ext}
+   Memory discipline (the core constraint at this frame count):
+     · decoded bitmaps live in a SLIDING WINDOW:
+       [current - KEEP_BEHIND … current + LOOKAHEAD]
+       everything older is closed and released
+     · bitmaps are decoded at DISPLAY size (capped at the source
+       resolution, never upscaled), so a 1080p asset rendered in a
+       900px hero never occupies 1080p of RAM
+     · low-memory devices (navigator.deviceMemory ≤ 4) decode at a
+       lower cap
+     · after the first full play only the final frame is kept —
+       the reveal rests on its ending
 
-   Design decisions (performance-first):
-     · canvas 2D + ImageBitmap, decode off the critical path
-     · small concurrency pool; first frames decode eagerly so the
-       reveal starts quickly, the tail fills in during idle time
-     · devicePixelRatio capped at 2 — cinematic frames do not
-       need 3x decoding cost
-     · frames wider than 2560px are downsampled once on decode
-     · playback pauses when the hero leaves the viewport and
-       when the tab is hidden; all-but-final bitmaps are released
-       after the first full play to cap memory
+   Playback discipline:
+     · linear playback only; scroll never scrubs the film, it
+       moves the camera around its final frame
+     · pauses off-screen and when the tab hides
+     · a broken frame is skipped, never fatal
    ============================================================ */
 
 export interface FrameManifest {
@@ -31,14 +34,16 @@ export interface FrameManifest {
 }
 
 interface PlayerHooks {
-  onReady: () => void;          // first frames decoded — safe to fade canvas in
-  onUnavailable: () => void;    // no manifest → staged scene carries the reveal
-  onEnded: () => void;          // sequence finished, holding final frame
+  onReady: () => void;          // first frames decoded — safe to fade in
+  onUnavailable: () => void;    // no manifest → staged scene carries on
+  onEnded: () => void;          // holding the final frame
 }
 
-const MAX_BITMAP_WIDTH = 2560;
-const CONCURRENCY = 3;
-const EAGER_FRAMES = 24;
+const LOOKAHEAD = 24;
+const KEEP_BEHIND = 2;
+const READY_FRAMES = 4;
+
+type Decoded = ImageBitmap | HTMLImageElement;
 
 export class FrameSequencePlayer {
   private readonly canvas: HTMLCanvasElement;
@@ -46,8 +51,8 @@ export class FrameSequencePlayer {
   private readonly hooks: PlayerHooks;
 
   private manifest: FrameManifest | null = null;
-  private bitmaps: (ImageBitmap | HTMLImageElement | null)[] = [];
-  private loadedCount = 0;
+  private bitmaps: (Decoded | null)[] = [];
+  private pending: boolean[] = [];
   private destroyed = false;
 
   private currentFrame = -1;
@@ -57,6 +62,7 @@ export class FrameSequencePlayer {
   private playStart = 0;
 
   private resizeObserver: ResizeObserver | null = null;
+  private maxDecodeWidth = 1920;
 
   constructor(canvas: HTMLCanvasElement, hooks: PlayerHooks) {
     this.canvas = canvas;
@@ -67,8 +73,8 @@ export class FrameSequencePlayer {
   /* ---------- lifecycle ---------- */
 
   /**
-   * @param prioritizeFinal when true (reduced motion), the last frame is
-   * decoded first because the experience shows a single composed still.
+   * @param prioritizeFinal reduced-motion mode: decode the last frame
+   * first because the experience shows one composed still.
    */
   async init(prioritizeFinal = false): Promise<void> {
     let manifest: FrameManifest;
@@ -97,18 +103,36 @@ export class FrameSequencePlayer {
       ...manifest,
     };
 
+    this.bitmaps = new Array(manifest.count).fill(null);
+    this.pending = new Array(manifest.count).fill(false);
+
+    this.computeDecodeCap();
     this.observeSize();
-    await this.preload(prioritizeFinal);
+
+    if (prioritizeFinal) {
+      await this.decode(manifest.count - 1);
+    } else {
+      await this.fillWindow(0);
+    }
   }
 
   destroy(): void {
     this.destroyed = true;
     this.stop();
     this.resizeObserver?.disconnect();
-    this.releaseBitmaps(-1);
+    this.releaseAllExcept(-1);
   }
 
-  /* ---------- size handling ---------- */
+  /* ---------- sizing ---------- */
+
+  private computeDecodeCap(): void {
+    const lowMemory =
+      typeof navigator !== 'undefined' &&
+      'deviceMemory' in navigator &&
+      (navigator as Navigator & { deviceMemory?: number }).deviceMemory !== undefined &&
+      ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) <= 4;
+    this.maxDecodeWidth = lowMemory ? 1280 : 1920;
+  }
 
   private observeSize(): void {
     this.resizeCanvas();
@@ -128,7 +152,7 @@ export class FrameSequencePlayer {
     if (this.currentFrame >= 0) this.drawFrame(this.currentFrame);
   }
 
-  /* ---------- preload ---------- */
+  /* ---------- urls & decode ---------- */
 
   private frameUrl(index: number): string {
     const m = this.manifest as FrameManifest;
@@ -136,99 +160,85 @@ export class FrameSequencePlayer {
     return `/frames/${m.prefix}${String(n).padStart(m.pad ?? 4, '0')}.${m.ext}`;
   }
 
-  /**
-   * Resolves once enough frames exist to begin the reveal
-   * (a handful for playback, the final one for reduced motion).
-   * Decoding of the remaining frames continues in the background.
-   */
-  private preload(prioritizeFinal: boolean): Promise<void> {
-    const m = this.manifest as FrameManifest;
-    this.bitmaps = new Array(m.count).fill(null);
-
-    const queue = Array.from({ length: m.count }, (_, i) => i);
-    if (prioritizeFinal) {
-      // Still first, everything else after.
-      queue.sort((a, b) => {
-        const pa = a === m.count - 1 ? 0 : 1;
-        const pb = b === m.count - 1 ? 0 : 1;
-        return pa - pb || a - b;
-      });
-    } else {
-      // Eager head, idle tail: the reveal begins fast, the rest catches up.
-      queue.sort((a, b) => {
-        const ea = a < EAGER_FRAMES ? 0 : 1;
-        const eb = b < EAGER_FRAMES ? 0 : 1;
-        return ea - eb || a - b;
-      });
-    }
-
-    const readyThreshold = prioritizeFinal ? 1 : Math.min(4, m.count);
-    let readyResolve: () => void = () => {};
-    const ready = new Promise<void>((r) => {
-      readyResolve = r;
-    });
-
-    let cursor = 0;
-    const worker = async (): Promise<void> => {
-      while (!this.destroyed) {
-        const index = queue[cursor++];
-        if (index === undefined) return;
-        try {
-          const bmp = await this.decode(this.frameUrl(index));
-          if (this.destroyed) { this.closeBitmap(bmp); return; }
-          this.bitmaps[index] = bmp;
-          this.loadedCount += 1;
-          if (this.loadedCount >= readyThreshold) readyResolve();
-          if (this.currentFrame < 0 && this.bitmaps[0]) this.drawFrame(0);
-        } catch {
-          // A single broken frame must never break the page.
-          this.bitmaps[index] = null;
-          if (this.loadedCount >= readyThreshold) readyResolve();
-        }
+  private async decode(index: number): Promise<void> {
+    if (this.pending[index] || this.bitmaps[index]) return;
+    this.pending[index] = true;
+    try {
+      const res = await fetch(this.frameUrl(index), { cache: 'force-cache' });
+      if (!res.ok) throw new Error(`frame ${res.status}`);
+      const blob = await res.blob();
+      const bmp = await this.toBitmap(blob);
+      if (this.destroyed) {
+        this.close(bmp);
+        return;
       }
-    };
-
-    void Promise.all(Array.from({ length: CONCURRENCY }, worker));
-    return ready;
+      this.bitmaps[index] = bmp;
+    } catch {
+      // a broken frame is skipped, never fatal
+    } finally {
+      this.pending[index] = false;
+    }
   }
 
-  private async decode(url: string): Promise<ImageBitmap | HTMLImageElement> {
-    const res = await fetch(url, { cache: 'force-cache' });
-    if (!res.ok) throw new Error(`frame ${res.status}`);
-    const blob = await res.blob();
+  private async toBitmap(blob: Blob): Promise<Decoded> {
+    const sourceWidth = this.manifest?.width ?? 1920;
+    // Display-sized decode: never upscale, shrink to the decode cap.
+    const target = Math.min(this.maxDecodeWidth, sourceWidth);
 
     if ('createImageBitmap' in window) {
-      let bmp = await createImageBitmap(blob);
-      if (bmp.width > MAX_BITMAP_WIDTH) {
-        const scale = MAX_BITMAP_WIDTH / bmp.width;
-        const small = await createImageBitmap(blob, {
-          resizeWidth: MAX_BITMAP_WIDTH,
-          resizeHeight: Math.round(bmp.height * scale),
+      if (target < sourceWidth) {
+        return createImageBitmap(blob, {
+          resizeWidth: target,
+          resizeHeight: Math.round(
+            (sourceWidth === 0 ? target : (this.manifest?.height ?? 1080) * (target / sourceWidth)),
+          ),
           resizeQuality: 'high',
         });
-        bmp.close();
-        bmp = small;
       }
-      return bmp;
+      return createImageBitmap(blob);
     }
-
-    // Older engines: fall back to an <img> element.
     const img = new Image();
-    img.src = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    img.src = url;
     await img.decode();
-    URL.revokeObjectURL(img.src);
+    URL.revokeObjectURL(url);
     return img;
   }
 
-  private closeBitmap(bmp: ImageBitmap | HTMLImageElement | null): void {
+  private close(bmp: Decoded | null): void {
     if (bmp && 'close' in bmp) bmp.close();
   }
 
-  /** Release decoded frames except the one we keep showing. */
-  private releaseBitmaps(keep: number): void {
+  /* ---------- sliding window ---------- */
+
+  /** Decode [from … from+LOOKAHEAD], dropping anything older. */
+  private async fillWindow(from: number): Promise<void> {
+    const m = this.manifest as FrameManifest;
+    const jobs: Promise<void>[] = [];
+    for (let i = from; i < Math.min(m.count, from + LOOKAHEAD); i += 1) {
+      if (!this.bitmaps[i] && !this.pending[i]) jobs.push(this.decode(i));
+    }
+    // a handful resolves the "ready" gate quickly
+    await Promise.all(jobs.slice(0, READY_FRAMES));
+    void Promise.all(jobs);
+    this.trimBehind(from);
+  }
+
+  private trimBehind(current: number): void {
+    const cut = Math.max(0, current - KEEP_BEHIND);
+    for (let i = 0; i < cut; i += 1) {
+      const bmp = this.bitmaps[i] ?? null;
+      if (bmp) {
+        this.close(bmp);
+        this.bitmaps[i] = null;
+      }
+    }
+  }
+
+  private releaseAllExcept(keep: number): void {
     this.bitmaps.forEach((bmp, i) => {
       if (i !== keep) {
-        this.closeBitmap(bmp);
+        this.close(bmp);
         this.bitmaps[i] = null;
       }
     });
@@ -244,43 +254,25 @@ export class FrameSequencePlayer {
     const cw = this.canvas.width;
     const ch = this.canvas.height;
     if (cw === 0 || ch === 0) return;
-
-    const bw = 'width' in bmp ? bmp.width : 0;
-    const bh = 'height' in bmp ? bmp.height : 0;
+    const bw = bmp.width;
+    const bh = bmp.height;
     if (bw === 0 || bh === 0) return;
 
-    // "cover" fit: crop the frame to the stage, never letterbox.
+    // "cover" fit — the footage fills the stage, never letterboxed
     const scale = Math.max(cw / bw, ch / bh);
     const dw = bw * scale;
     const dh = bh * scale;
-    const dx = (cw - dw) / 2;
-    const dy = (ch - dh) / 2;
-
     ctx.clearRect(0, 0, cw, ch);
-    ctx.drawImage(bmp, dx, dy, dw, dh);
+    ctx.drawImage(bmp, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     this.currentFrame = index;
   }
 
-  /** Static composition: jump straight to a frame (reduced motion). */
-  async showFinal(): Promise<void> {
+  /** Reduced motion: one composed still (the film's ending). */
+  showFinal(): void {
     const m = this.manifest;
     if (!m) return;
-    // Wait for at least the final frame to decode.
     const last = m.count - 1;
-    let waited = 0;
-    while (!this.bitmaps[last] && waited < 120 && !this.destroyed) {
-      await new Promise((r) => setTimeout(r, 100));
-      waited += 1;
-    }
     if (this.bitmaps[last]) this.drawFrame(last);
-    else this.drawFrame(this.firstLoadedIndex());
-  }
-
-  private firstLoadedIndex(): number {
-    for (let i = 0; i < this.bitmaps.length; i += 1) {
-      if (this.bitmaps[i]) return i;
-    }
-    return 0;
   }
 
   /* ---------- playback ---------- */
@@ -289,12 +281,13 @@ export class FrameSequencePlayer {
     const m = this.manifest;
     if (!m || this.playing || this.destroyed) return;
     if (this.playedOnce) {
-      // After the first telling, the story rests on its final frame.
+      // after the first telling, the story rests on its final frame
       this.drawFrame(m.count - 1);
       return;
     }
     this.playing = true;
     this.playStart = performance.now();
+    void this.fillWindow(0);
     this.rafId = requestAnimationFrame(this.tick);
   }
 
@@ -318,18 +311,22 @@ export class FrameSequencePlayer {
     const elapsed = (now - this.playStart) / 1000;
     const target = Math.min(m.count - 1, Math.floor(elapsed * fps));
 
-    // Draw the latest decoded frame at or before `target`.
+    // keep the window ahead of the playhead
+    void this.fillWindow(target);
+
+    // newest decoded frame at or before the playhead
     let index = target;
     while (index > 0 && !this.bitmaps[index]) index -= 1;
     if (this.bitmaps[index] && index !== this.currentFrame) {
       this.drawFrame(index);
+      this.trimBehind(index);
     }
 
     if (target >= m.count - 1 && this.bitmaps[m.count - 1]) {
       this.drawFrame(m.count - 1);
       this.stop();
       this.playedOnce = true;
-      this.releaseBitmaps(m.count - 1);
+      this.releaseAllExcept(m.count - 1);
       this.hooks.onEnded();
       return;
     }

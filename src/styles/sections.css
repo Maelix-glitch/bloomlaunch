@@ -1,15 +1,15 @@
 /* ============================================================
-   BLOOM · ENTRY / CHAPTERS / LAUNCH
-   One continuous world: the camera leaves the hero and moves
-   through cinematic chapters, ending at the launch signature.
+   BLOOM · ENTRY / CHAPTERS / CODA / LAUNCH
+   One continuous world after the film: editorial copy beside
+   truthful product screens, ending at the launch signature.
    ============================================================ */
 
 section { position: relative; }
 
 /* ---------- shared reveal choreography ----------
    Reveals animate the individual `translate` property; parallax
-   writes plain `transform` — the two compose without fighting,
-   and scroll updates are never dragged through reveal easing. */
+   writes plain `transform` — they compose without fighting, and
+   scroll updates are never dragged through reveal easing. */
 
 [data-reveal] {
   opacity: 0;
@@ -24,171 +24,62 @@ section { position: relative; }
   [data-reveal] { opacity: 1; translate: 0 0; transition: none; }
 }
 
-/* ================= 01 · ENTRY (inside Bloom) ================= */
+/* ---------- product screens (the truthful shots) ---------- */
+
+.shot {
+  margin: 0;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+  background: var(--bg-2);
+  box-shadow:
+    0 60px 120px -60px rgba(0, 0, 0, 0.9),
+    0 24px 70px -50px rgba(167, 139, 250, 0.2);
+}
+.shot img {
+  width: 100%; height: auto; display: block;
+  aspect-ratio: 16 / 10;      /* the screens are authored at 16:10 — exact fit, no crop */
+  object-fit: cover;
+}
+.shot-cap {
+  padding: 0.8rem 1.2rem;
+  font-size: var(--step--1);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-top: 1px solid var(--hairline);
+  background: rgba(246, 241, 233, 0.02);
+}
+.shot-wide { max-width: 1120px; margin-inline: auto; }
+.shot-sub { margin-top: var(--sp-2); }
+
+.h2-em {
+  font-style: italic;
+  color: var(--lilac);
+}
+
+/* ================= 01 · ENTRY ================= */
 
 .today {
   padding: var(--sp-6) var(--page-pad) var(--sp-5);
   background:
-    radial-gradient(70% 42% at 50% 0%, rgba(185, 166, 218, 0.09), transparent 70%),
+    radial-gradient(70% 42% at 50% 0%, rgba(167, 139, 250, 0.10), transparent 70%),
     linear-gradient(to bottom, var(--bg-0), var(--bg-1));
 }
 
 .section-head {
-  max-width: 44rem;
+  max-width: 46rem;
   margin: 0 auto var(--sp-5);
   text-align: center;
 }
 .section-lede {
   margin: var(--sp-2) auto 0;
-  color: var(--ink-1); font-size: var(--step-1); font-weight: 350;
-}
-
-/* the app window — Bloom's own grammar, dark and warm */
-.app-frame {
-  max-width: 1080px;
-  margin: 0 auto;
-  border-radius: var(--r-xl);
-  border: 1px solid var(--hairline);
-  background: linear-gradient(180deg, rgba(30, 22, 40, 0.6), rgba(17, 13, 23, 0.9));
-  box-shadow:
-    0 60px 120px -60px rgba(0, 0, 0, 0.9),
-    0 30px 80px -50px rgba(185, 166, 218, 0.16);
-  overflow: hidden;
-}
-
-.app-chrome {
-  display: flex; align-items: center; gap: 0.45rem;
-  padding: 0.85rem 1.15rem;
-  border-bottom: 1px solid var(--hairline);
-  background: rgba(246, 241, 233, 0.02);
-}
-.app-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--hairline-strong); }
-.app-chrome-title {
-  margin-left: auto; margin-right: auto;
-  font-size: var(--step--1); color: var(--ink-3); letter-spacing: 0.08em;
-  transform: translateX(-22px);
-}
-
-.app-body { display: grid; grid-template-columns: 200px 1fr; min-height: 480px; }
-
-.app-side {
-  display: flex; flex-direction: column; gap: 0.15rem;
-  padding: var(--sp-3) var(--sp-2);
-  border-right: 1px solid var(--hairline);
-}
-.app-side-item {
-  padding: 0.5rem 0.9rem;
-  border-radius: var(--r-s);
-  color: var(--ink-2);
-  font-size: var(--step--1); letter-spacing: 0.03em;
-}
-.app-side-item.is-active {
-  color: var(--ink-0);
-  background: var(--card-2);
-  box-shadow: inset 0 0 0 1px var(--hairline);
-}
-
-.app-main { padding: var(--sp-4); display: grid; gap: var(--sp-3); align-content: start; }
-
-.app-date {
-  margin: 0;
-  font-size: var(--step--1); letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--ink-3);
-}
-.app-title {
-  margin: 0.3rem 0 0;
+  color: var(--ink-1);
+  font-size: var(--step-1);
+  font-weight: 350;
   font-family: var(--font-display);
-  font-size: var(--step-3); font-weight: 380;
-  display: flex; align-items: baseline; gap: 0.6rem;
+  font-style: italic;
 }
-.bloom-dot { font-size: 0.45em; color: var(--rose); font-style: normal; }
-
-.app-grid {
-  display: grid; gap: var(--sp-2);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.app-card {
-  border-radius: var(--r-l);
-  border: 1px solid var(--hairline);
-  background: var(--card);
-  padding: var(--sp-3);
-  display: grid; gap: var(--sp-2); align-content: start;
-}
-.app-card-label {
-  margin: 0;
-  font-size: var(--step--1); font-weight: 550;
-  letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--ink-3);
-}
-.app-card-value { margin: 0; font-size: var(--step-1); font-weight: 450; }
-.app-card-note { margin: 0; color: var(--ink-2); font-size: var(--step--1); }
-
-/* mood card */
-.mood-orb {
-  width: clamp(84px, 10vw, 116px); aspect-ratio: 1; border-radius: 50%;
-  margin: var(--sp-1) auto;
-  background:
-    radial-gradient(circle at 32% 28%, rgba(246, 241, 233, 0.85), transparent 26%),
-    radial-gradient(circle at 50% 55%, var(--rose), var(--lilac) 78%);
-  box-shadow: 0 18px 50px -18px rgba(232, 162, 180, 0.65);
-  animation: orb-breathe 8s var(--ease-soft) infinite;
-}
-@keyframes orb-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.045); }
-}
-.mood-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-
-/* cycle ring (shared by entry + chapter) */
-.cycle-ring { width: min(100%, 210px); margin: 0 auto; }
-.cycle-ring-large { width: min(62vw, 300px); }
-.cycle-track { fill: none; stroke: rgba(246, 241, 233, 0.1); stroke-width: 2.5; }
-.cycle-arc {
-  fill: none; stroke: url(#bloom-cycle-gradient);
-  stroke-width: 3.5; stroke-linecap: round;
-  stroke-dasharray: 490; stroke-dashoffset: 204; /* ~day 17 of 29 */
-  transform: rotate(-90deg); transform-origin: center;
-}
-.cycle-ticks line { stroke: rgba(246, 241, 233, 0.28); stroke-width: 1.4; }
-.cycle-ticks line.is-phase { stroke: rgba(240, 198, 158, 0.55); }
-.cycle-today { fill: var(--peach); filter: drop-shadow(0 0 6px rgba(240, 198, 158, 0.8)); }
-
-/* signals card */
-.signal-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
-.signal-row {
-  display: grid; grid-template-columns: 6.2rem 1fr auto; gap: 0.9rem;
-  align-items: center;
-  font-size: var(--step--1); color: var(--ink-1);
-}
-.signal-name { letter-spacing: 0.06em; color: var(--ink-2); }
-.signal-value { font-variant-numeric: tabular-nums; color: var(--ink-0); }
-.spark { width: 100%; height: 26px; overflow: visible; }
-.spark-line {
-  fill: none; stroke: var(--sage); stroke-width: 2; stroke-linecap: round;
-  opacity: 0.9;
-}
-.signal-dots { display: flex; gap: 0.3rem; }
-.signal-dots i {
-  width: 12px; height: 12px; border-radius: 50%;
-  background: var(--hairline-strong);
-}
-.signal-dots i.on { background: var(--peach); }
-
-/* coach card (shared) */
-.coach-line, .coach-card-line {
-  margin: 0;
-  display: flex; gap: 0.7rem; align-items: flex-start;
-  color: var(--ink-1); line-height: 1.6;
-}
-.coach-glyph {
-  flex: none;
-  width: 22px; height: 22px; margin-top: 0.2rem;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--rose), var(--lilac));
-  box-shadow: 0 0 14px rgba(232, 162, 180, 0.55);
-}
-.coach-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
 /* ================= 02 · CHAPTERS ================= */
 
@@ -202,7 +93,7 @@ section { position: relative; }
   grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
   gap: clamp(2rem, 6vw, 6rem);
   align-items: center;
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: var(--sp-6) var(--page-pad);
 }
@@ -220,13 +111,12 @@ section { position: relative; }
 .kicker-num {
   font-family: var(--font-display); font-style: italic;
   font-size: var(--step-1); letter-spacing: 0;
-  color: var(--chapter-tone, var(--rose));
+  color: var(--chapter-tone, var(--lilac));
 }
-.chapter[data-theme="rose"]  { --chapter-tone: var(--rose); }
-.chapter[data-theme="lilac"] { --chapter-tone: var(--lilac); }
-.chapter[data-theme="sage"]  { --chapter-tone: var(--sage); }
-.chapter[data-theme="peach"] { --chapter-tone: var(--peach); }
-.chapter[data-theme="gold"]  { --chapter-tone: var(--gold); }
+.chapter[data-theme="violet"] { --chapter-tone: var(--lilac); }
+.chapter[data-theme="sage"]   { --chapter-tone: var(--sage); }
+.chapter[data-theme="rose"]   { --chapter-tone: var(--rose); }
+.chapter[data-theme="gold"]   { --chapter-tone: var(--gold); }
 
 .chapter-lede {
   margin: var(--sp-3) 0 0;
@@ -234,11 +124,11 @@ section { position: relative; }
 }
 
 .chapter-scene {
-  display: grid; place-items: center;
+  display: grid; justify-items: stretch;
   will-change: transform;
 }
 
-/* --- 01 Stories: the keepsake strip --- */
+/* --- 01 Stories: the keepsake strip (composed, not a screenshot) --- */
 
 .memory-strip {
   display: flex; gap: clamp(0.8rem, 2vw, 1.4rem);
@@ -277,175 +167,29 @@ section { position: relative; }
 .memory figcaption strong { font-weight: 550; color: var(--ink-0); }
 .memory figcaption span { color: var(--ink-3); font-size: 0.85em; letter-spacing: 0.04em; }
 
-/* --- 02 Mood: inner weather --- */
+/* --- coda: the wide closing shot --- */
 
-.mood-scene {
-  width: min(100%, 460px);
-  padding: var(--sp-4) var(--sp-3);
-  border-radius: var(--r-xl);
-  border: 1px solid var(--hairline);
-  background:
-    radial-gradient(80% 60% at 50% 0%, rgba(185, 166, 218, 0.12), transparent 65%),
-    var(--card);
-  display: grid; gap: var(--sp-3); justify-items: center;
-  text-align: center;
+.coda {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: var(--sp-4) var(--page-pad) var(--sp-6);
 }
-.mood-weather {
-  width: clamp(120px, 16vw, 170px); aspect-ratio: 1; border-radius: 50%;
-  background:
-    radial-gradient(circle at 34% 30%, rgba(246, 241, 233, 0.9), transparent 24%),
-    radial-gradient(circle at 60% 68%, var(--lilac), var(--rose) 80%);
-  filter: blur(0.5px);
-  box-shadow: 0 26px 70px -28px rgba(185, 166, 218, 0.7);
-  animation: orb-breathe 9s var(--ease-soft) infinite;
-}
-.mood-question {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--step-2); font-weight: 380;
-}
-.mood-week {
-  list-style: none; margin: 0; padding: 0;
-  display: flex; gap: clamp(0.6rem, 2vw, 1rem);
-}
-.mood-week li { display: grid; gap: 0.45rem; justify-items: center; }
-.mood-week i {
-  width: clamp(18px, 2.4vw, 26px); aspect-ratio: 1; border-radius: 50%;
-  background: color-mix(in oklab, var(--lilac) var(--m, 50%), rgba(246, 241, 233, 0.08));
-  box-shadow: inset 0 0 0 1px rgba(246, 241, 233, 0.08);
-}
-.mood-week span { font-size: 0.72rem; letter-spacing: 0.1em; color: var(--ink-3); }
-.mood-week .is-today span { color: var(--peach); }
-.mood-week .is-today i { box-shadow: 0 0 0 2px rgba(240, 198, 158, 0.45); }
-
-/* --- 03 Trackers: quiet signals --- */
-
-.signal-card {
-  list-style: none; margin: 0;
-  width: min(100%, 520px);
-  padding: var(--sp-3) var(--sp-3);
-  border-radius: var(--r-xl);
-  border: 1px solid var(--hairline);
-  background: var(--card);
-  display: grid; gap: 1.3rem;
-}
-.signal-line {
-  display: grid;
-  grid-template-columns: 0.8rem 6rem 1fr auto;
-  gap: 1rem; align-items: center;
-}
-.signal-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--tone, var(--rose)); }
-.signal-title { font-size: var(--step--1); letter-spacing: 0.08em; color: var(--ink-1); }
-.signal-track {
-  position: relative; height: 4px; border-radius: 2px;
-  background: rgba(246, 241, 233, 0.08); overflow: hidden;
-}
-.signal-track i {
-  position: absolute; inset: 0 auto 0 0; width: var(--v, 50%);
-  border-radius: 2px;
-  background: linear-gradient(90deg, color-mix(in oklab, var(--tone, var(--rose)) 55%, transparent), var(--tone, var(--rose)));
-}
-.signal-num { font-variant-numeric: tabular-nums; font-size: var(--step--1); color: var(--ink-0); }
-
-/* --- 04 Cycle: the ring --- */
-
-.cycle-scene {
-  display: grid; gap: var(--sp-3); justify-items: center; text-align: center;
-  width: min(100%, 480px);
-  padding: var(--sp-4);
-  border-radius: var(--r-xl);
-  border: 1px solid var(--hairline);
-  background:
-    radial-gradient(70% 55% at 50% 30%, rgba(240, 198, 158, 0.09), transparent 70%),
-    var(--card);
-}
-.cycle-caption { display: grid; gap: 0.3rem; }
-.cycle-day { margin: 0; font-family: var(--font-display); font-size: var(--step-2); font-weight: 380; }
-.cycle-phase { margin: 0; color: var(--peach); font-size: var(--step--1); letter-spacing: 0.14em; text-transform: uppercase; }
-.cycle-next { margin: 0; color: var(--ink-2); font-size: var(--step--1); }
-
-/* --- 05 Rewards: petals, not jackpots --- */
-
-.reward-scene {
-  width: min(100%, 480px);
-  padding: var(--sp-4);
-  border-radius: var(--r-xl);
-  border: 1px solid var(--hairline);
-  background: var(--card);
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--sp-3);
-  align-items: center;
-}
-.petal-ring {
-  width: clamp(108px, 14vw, 150px); aspect-ratio: 1; border-radius: 50%;
-  display: grid; place-items: center;
-  background:
-    conic-gradient(var(--gold) 0deg 245deg, rgba(246, 241, 233, 0.09) 245deg 360deg);
-  -webkit-mask: radial-gradient(closest-side, transparent 74%, #000 75%);
-  mask: radial-gradient(closest-side, transparent 74%, #000 75%);
-  position: relative;
-}
-.petal-ring-core {
-  position: absolute; inset: 0;
-  display: grid; place-items: center;
-  font-size: 2rem; color: var(--gold);
-  -webkit-mask: none; mask: none;
-}
-.reward-meta { display: grid; gap: 0.4rem; }
-.reward-rank { margin: 0; font-size: var(--step-1); color: var(--ink-1); }
-.reward-rank strong { color: var(--gold); font-weight: 600; }
-.reward-season { margin: 0; color: var(--ink-2); font-size: var(--step--1); letter-spacing: 0.06em; }
-.milestones {
-  list-style: none; margin: 0.6rem 0 0; padding: 0;
-  display: grid; gap: 0.45rem;
-  color: var(--ink-1); font-size: var(--step--1);
-}
-.milestones li { display: flex; gap: 0.6rem; align-items: center; }
-.milestones li::before {
-  content: ""; width: 14px; height: 14px; flex: none;
-  border-radius: 50%;
-  border: 1px solid var(--hairline-strong);
-}
-.milestones li.done { color: var(--ink-0); }
-.milestones li.done::before {
-  background: var(--gold); border-color: var(--gold);
-  box-shadow: 0 0 10px rgba(227, 195, 127, 0.5);
-}
-
-/* --- 06 Coach: the quiet companion --- */
-
-.coach-card {
-  width: min(100%, 460px);
-  padding: var(--sp-3);
-  border-radius: var(--r-l);
-  border: 1px solid var(--hairline);
-  background: linear-gradient(180deg, rgba(232, 162, 180, 0.07), rgba(246, 241, 233, 0.02));
-  display: grid; gap: var(--sp-2);
-  box-shadow: 0 40px 90px -60px rgba(232, 162, 180, 0.4);
-}
-.coach-card-head {
-  margin: 0;
-  display: flex; align-items: center; gap: 0.6rem;
-  font-size: var(--step--1); letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--ink-2);
-}
-.coach-card-head .coach-glyph { width: 18px; height: 18px; margin: 0; }
 
 /* ================= 03 · LAUNCH ================= */
 
 .launch {
   padding: var(--sp-6) var(--page-pad);
   background:
-    radial-gradient(60% 55% at 50% 100%, rgba(232, 162, 180, 0.12), transparent 70%),
+    radial-gradient(60% 55% at 50% 100%, rgba(167, 139, 250, 0.13), transparent 70%),
     var(--bg-0);
   text-align: center;
 }
 .launch-inner {
+  position: relative;
   max-width: 44rem; margin: 0 auto;
   display: grid; gap: var(--sp-3); justify-items: center;
 }
-.launch-mark { width: clamp(64px, 8vw, 92px); aspect-ratio: 1; color: var(--rose); display: inline-flex; }
+.launch-mark { width: clamp(64px, 8vw, 92px); aspect-ratio: 1; color: var(--lilac); display: inline-flex; }
 .launch-title { font-size: var(--step-4); }
 .launch-lede { margin: 0; color: var(--ink-1); font-size: var(--step-1); font-weight: 350; max-width: 34rem; }
 
@@ -468,10 +212,24 @@ section { position: relative; }
 .launch-form input::placeholder { color: var(--ink-3); }
 .launch-form input:focus-visible {
   outline: none;
-  border-color: var(--rose);
+  border-color: var(--lilac);
   background: rgba(246, 241, 233, 0.07);
 }
 .launch-note { margin: 0; color: var(--ink-3); font-size: var(--step--1); }
+
+/* the film's four-point sparkle, echoed once at the signature */
+.sparkle {
+  position: absolute;
+  color: var(--ink-3);
+  font-size: 1.1rem;
+  animation: sparkle-pulse 5s var(--ease-soft) infinite;
+}
+.sparkle-a { top: 12%; right: 6%; }
+.sparkle-b { bottom: 18%; left: 8%; animation-delay: 2.4s; }
+@keyframes sparkle-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(0.9); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
 
 /* ================= responsive recomposition ================= */
 
@@ -488,27 +246,12 @@ section { position: relative; }
 }
 
 @media (max-width: 720px) {
-  .app-body { grid-template-columns: 1fr; }
-  .app-side {
-    flex-direction: row; overflow-x: auto;
-    border-right: 0; border-bottom: 1px solid var(--hairline);
-    padding: var(--sp-2);
-    scrollbar-width: none;
-  }
-  .app-side::-webkit-scrollbar { display: none; }
-  .app-side-item { flex: none; }
-  .app-main { padding: var(--sp-3) var(--sp-2); }
-  .app-grid { grid-template-columns: 1fr; }
-
   .memory-strip { flex-wrap: wrap; }
   .memory { flex-basis: calc(50% - 0.7rem); max-width: 200px; }
   .memory-tall { margin-top: 0; }
-
-  .signal-line { grid-template-columns: 0.7rem 5rem 1fr auto; gap: 0.6rem; }
-  .reward-scene { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-  .milestones { justify-items: center; }
+  .shot { border-radius: var(--r-l); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mood-orb, .mood-weather { animation: none; }
+  .sparkle { animation: none; opacity: 0.3; }
 }

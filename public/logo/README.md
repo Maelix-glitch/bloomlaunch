@@ -1,15 +1,8 @@
-# Bloom · logo slot
+# Bloom mark — production asset
 
-Place the exact production Bloom mark here:
+`bloom-mark.png` is the real Bloom app icon (dark squircle, sage-to-gold arc),
+cropped from the first cinematic frame `bloom_0001.webp`. It is a crop only —
+the icon itself is unchanged.
 
-- `bloom-mark.svg`  ← preferred (vector, crisp at every size), or
-- `bloom-mark.png`  ← square, transparent background, ≥ 512 px.
-
-The loader (`src/hero/mark.ts`) checks for these files on boot and uses the
-real asset everywhere it appears — hero reveal, navigation, launch signature,
-footer and favicon. Its geometry is never rebuilt or redrawn.
-
-Until the real mark is supplied, a clearly-flagged provisional glyph holds the
-composition so the cinematic beats still read correctly in QA.
-
-Optional: `og.jpg` (1200×630) for social share cards.
+`src/hero/mark.ts` injects it into the hero, navigation, and coda. Never substitute
+a redrawn mark for this file.

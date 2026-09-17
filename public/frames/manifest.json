@@ -1,0 +1,11 @@
+{
+  "prefix": "bloom_",
+  "pad": 4,
+  "ext": "webp",
+  "start": 1,
+  "count": 192,
+  "fps": 24,
+  "width": 1920,
+  "height": 1080,
+  "source": "BloomCinematicHero/frames — authored prepared reveal, 8s @ 24fps"
+}

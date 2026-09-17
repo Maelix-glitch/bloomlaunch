@@ -1,16 +1,17 @@
 /* ============================================================
    BLOOM · OVERTURE DIRECTOR
-   Beats:
-     1 darkness        — the page opens on near-black
-     2 anticipation    — a warm glow begins to breathe
-     3 mark            — the Bloom mark descends and settles
-     4 prepared reveal — authored frames play; the staged Mac
-                         carries the scene when frames are absent
-     5 camera          — scroll dollies toward the Mac and hands
-                         the visitor into Bloom (section #today)
 
-   Nothing hijacks native scrolling; scroll is a camera control
-   only. Transform/opacity writes are batched per frame.
+   The authored footage IS the opening film:
+     darkness → anticipation glow → the film fades in (frame 1 is
+     already "Mac + glowing Bloom mark") → the mark blooms and the
+     product windows rise → the film rests on its final frame →
+     editorial copy arrives → scroll becomes the camera and hands
+     the visitor into Bloom (#today).
+
+   When the footage is absent (assets not deployed), the staged
+   scene carries the same beats: mark descends, Mac rises.
+
+   Nothing hijacks native scrolling; transform/opacity only.
    ============================================================ */
 
 import { FrameSequencePlayer } from './frames';
@@ -42,7 +43,6 @@ export function initHero(): void {
   const n = nodes();
   if (!n) return;
 
-  const reduced = prefersReducedMotion();
   let player: FrameSequencePlayer | null = null;
   let framesLive = false;
   let sequenceDone = false;
@@ -54,63 +54,61 @@ export function initHero(): void {
     n.hero.classList.add('is-copy');
   };
 
-  const beginReveal = (): void => {
-    n.hero.classList.add('is-revealing'); // mark drifts on; scene takes the stage
-    if (!framesLive) n.stage.classList.add('is-lit');
+  /* ---------- staged fallback beats (no footage) ---------- */
+
+  const stagedBeats = (): void => {
+    window.setTimeout(() => n.hero.classList.add('is-mark'), 620);
+    window.setTimeout(() => n.hero.classList.add('is-settled'), 1900);
+    window.setTimeout(() => {
+      n.hero.classList.add('is-revealing');
+      n.stage.classList.add('is-lit');
+    }, 2450);
+    window.setTimeout(showCopy, 3300);
   };
 
-  const enterSequence = (): void => {
-    n.canvas.classList.add('is-live');
-    n.stage.classList.add('is-hidden');
-    player?.play();
+  /* ---------- footage beats ---------- */
+
+  const footageBeats = (): void => {
+    window.setTimeout(() => {
+      framesLive = true;
+      n.hero.classList.add('has-frames', 'is-revealing');
+      n.canvas.classList.add('is-live');
+      n.stage.classList.add('is-hidden');
+      player?.play();
+    }, 500);
   };
 
-  /* ---- beat sheet (timing tuned for a ~2.4s settle) ---- */
-
-  if (reduced) {
-    // Composed still: atmosphere and hierarchy intact, no travel.
-    n.hero.classList.add('is-anticipating', 'is-mark', 'is-settled', 'is-revealing');
+  if (prefersReducedMotion()) {
+    // Composed still: the film's ending, copy present, no travel.
+    n.hero.classList.add('is-anticipating', 'is-revealing');
     player = new FrameSequencePlayer(n.canvas, {
       onReady: () => {
         framesLive = true;
+        n.hero.classList.add('has-frames');
         n.canvas.classList.add('is-live');
         n.stage.classList.add('is-hidden');
-        void player?.showFinal();
+        player?.showFinal();
         showCopy();
       },
-      onUnavailable: () => showCopy(),
+      onUnavailable: () => {
+        n.hero.classList.add('is-settled');
+        n.stage.classList.add('is-lit');
+        showCopy();
+      },
       onEnded: () => showCopy(),
     });
     void player.init(true);
   } else {
     window.setTimeout(() => n.hero.classList.add('is-anticipating'), 120);
-    window.setTimeout(() => n.hero.classList.add('is-mark'), 620);
-    window.setTimeout(() => n.hero.classList.add('is-settled'), 1900);
 
     player = new FrameSequencePlayer(n.canvas, {
-      onReady: () => {
-        framesLive = true;
-        // Hold the mark a beat longer, then let the frames carry the scene.
-        window.setTimeout(() => {
-          beginReveal();
-          enterSequence();
-        }, 550);
-      },
-      onUnavailable: () => {
-        // Staged scene becomes the prepared reveal.
-        window.setTimeout(() => {
-          beginReveal();
-          sequenceDone = true;
-          showCopy();
-        }, 550);
-      },
+      onReady: footageBeats,
+      onUnavailable: stagedBeats,
       onEnded: () => {
         sequenceDone = true;
         showCopy();
       },
     });
-
-    // Start decoding immediately; play only when in view.
     void player.init();
 
     const visibility = new IntersectionObserver(
@@ -130,7 +128,7 @@ export function initHero(): void {
     });
   }
 
-  /* ---- scroll camera ---- */
+  /* ---------- scroll camera ---------- */
 
   let vh = window.innerHeight;
   let ticking = false;
@@ -145,8 +143,8 @@ export function initHero(): void {
     if (!prefersReducedMotion()) {
       n.rig.style.transform = `scale(${(1 + p * 0.09).toFixed(4)}) translateY(${(p * -3.5).toFixed(3)}%)`;
       if (p > 0) {
-        n.copy.style.opacity = String(clamp01(1 - p * 2.6).toFixed(3));
-        n.cue.style.opacity = String(clamp01(0.85 - p * 5).toFixed(3));
+        n.copy.style.opacity = clamp01(1 - p * 2.6).toFixed(3);
+        n.cue.style.opacity = clamp01(0.85 - p * 5).toFixed(3);
       } else {
         // leave the class-driven entrance choreography untouched
         n.copy.style.opacity = '';
@@ -156,7 +154,7 @@ export function initHero(): void {
 
     // hand-off into Bloom: the overture recedes as #today arrives
     const fade = clamp01((p - 0.72) / 0.28);
-    n.sticky.style.opacity = String((1 - fade).toFixed(3));
+    n.sticky.style.opacity = (1 - fade).toFixed(3);
     n.sticky.style.transform = fade > 0 ? `scale(${(1 + fade * 0.05).toFixed(4)})` : '';
   };
 

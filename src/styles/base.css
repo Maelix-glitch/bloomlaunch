@@ -121,11 +121,11 @@ h1, h2, h3 { margin: 0; font-weight: 380; }
     border-color var(--dur-1) var(--ease-soft);
 }
 .btn-primary {
-  background: var(--ink-0); color: #171019;
+  background: var(--gold); color: #241a0e;
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 34px -12px rgba(246, 241, 233, 0.45);
+  box-shadow: 0 12px 34px -12px rgba(232, 196, 124, 0.5);
 }
 .btn-primary:active { transform: translateY(0); }
 .btn-ghost {
@@ -216,7 +216,12 @@ h1, h2, h3 { margin: 0; font-weight: 380; }
   margin: 0; display: inline-flex; align-items: center; gap: 0.5rem;
   font-family: var(--font-display); font-size: var(--step-2);
 }
-.footer-mark [data-mark-slot] { width: 22px; height: 22px; color: var(--rose); display: inline-flex; }
+.footer-mark [data-mark-slot] { width: 22px; height: 22px; color: var(--lilac); display: inline-flex; }
+.footer-motto {
+  margin: 0;
+  font-family: var(--font-display); font-style: italic;
+  color: var(--ink-2); font-size: var(--step-0);
+}
 .footer-note { margin: 0; max-width: 46ch; color: var(--ink-2); font-size: var(--step--1); }
 .footer-links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; justify-content: center; }
 .footer-links a {

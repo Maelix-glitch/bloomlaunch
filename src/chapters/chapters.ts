@@ -13,7 +13,6 @@ const MAX_DRIFT_PX = 28;
 
 export function initChapters(): void {
   initReveals();
-  initCycleTicks();
   initParallax();
 }
 
@@ -40,35 +39,6 @@ const initReveals = (): void => {
     { threshold: 0.16, rootMargin: '0px 0px -6% 0px' },
   );
   for (const el of targets) io.observe(el);
-};
-
-/* ---------- cycle ring: 29 ticks, today marked by the arc ---------- */
-
-const CYCLE_DAYS = 29;
-const TICK_FROM = 84;
-const TICK_TO = 89;
-
-const initCycleTicks = (): void => {
-  const groups = Array.from(document.querySelectorAll<SVGGElement>('.cycle-ticks'));
-  if (groups.length === 0) return;
-
-  for (const group of groups) {
-    const frag = document.createDocumentFragment();
-    for (let day = 0; day < CYCLE_DAYS; day += 1) {
-      const angle = (day / CYCLE_DAYS) * Math.PI * 2 - Math.PI / 2;
-      const cos = Math.cos(angle);
-      const sin = Math.sin(angle);
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', String(100 + cos * TICK_FROM));
-      line.setAttribute('y1', String(100 + sin * TICK_FROM));
-      line.setAttribute('x2', String(100 + cos * TICK_TO));
-      line.setAttribute('y2', String(100 + sin * TICK_TO));
-      // the five days ahead glow slightly — "what comes next"
-      if (day >= 17 && day < 22) line.classList.add('is-phase');
-      frag.appendChild(line);
-    }
-    group.appendChild(frag);
-  }
 };
 
 /* ---------- parallax ---------- */
