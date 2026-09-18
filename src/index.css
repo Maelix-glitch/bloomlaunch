@@ -42,7 +42,12 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  /* `clip`, never `hidden`. `overflow-x: hidden` forces overflow-y to `auto`,
+     which turns <body> into a scroll container and silently breaks
+     `position: sticky` on the hero — the section scrolls away instead of
+     pinning, so the frame sequence never advances. `clip` contains overflow
+     without creating a scroll container. */
+  overflow-x: clip;
 }
 
 /* The custom pointer only takes over once Cursor.tsx has mounted and
@@ -131,14 +136,27 @@ body {
   50% { opacity: 0.7; transform: translateX(8%); }
 }
 
+/* Reduced motion: the system setting is honoured, and `:not(.force-motion)`
+   lets the hero's explicit "play the sequence" control opt back in. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  *, *::before, *::after {
+  html:not(.force-motion) *,
+  html:not(.force-motion) *::before,
+  html:not(.force-motion) *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* The reverse override: still everything even on a system that allows motion. */
+html.force-still *,
+html.force-still *::before,
+html.force-still *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
 }

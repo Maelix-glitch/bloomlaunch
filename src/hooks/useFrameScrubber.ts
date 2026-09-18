@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from "react";
-import { useMotionValue, useMotionValueEvent, type MotionValue } from "framer-motion";
+import { useMotionValueEvent, type MotionValue } from "framer-motion";
 import { FRAME_COUNT, frameSequence } from "../lib/frameSequence";
 import { easeFrame, frameIndexForProgress, isSettled } from "../lib/scrub";
 
@@ -13,8 +13,6 @@ type Options = {
   stillIndex?: number;
   /** exponential smoothing time constant in ms — higher is silkier */
   smoothing?: number;
-  /** scene brightness (0 → 2) applied while drawing, so the grade is free */
-  brightness?: MotionValue<number>;
 };
 
 /**
@@ -30,6 +28,16 @@ const MAX_CROP_NARROW = 2;
 const NARROW_ASPECT = 1.1;
 
 /**
+ * Ceiling on the canvas backing store's pixel ratio.
+ *
+ * At 2x on a 1440px viewport the canvas is 2880x1620, and every scroll frame
+ * pays to fill ~4.7M pixels. The sequence is a photographic backdrop, not text:
+ * 1.5x is visually indistinguishable here and roughly halves the per-frame fill
+ * cost, which is the difference between a smooth scrub and a chugging one.
+ */
+const MAX_DPR = 1.5;
+
+/**
  * Renders the hero frame sequence onto a canvas, driven entirely by scroll.
  *
  * The frame index is not snapped to the scroll position: it eases toward it
@@ -37,22 +45,20 @@ const NARROW_ASPECT = 1.1;
  * than a slideshow. Because the target comes purely from scroll progress,
  * the motion is exactly reversible — forwards, backwards, any speed.
  */
-
 export function useFrameScrubber({
   canvasRef,
   progress,
   enabled = true,
   stillIndex = 0,
-  smoothing = 85,
-  brightness,
+  smoothing = 80,
 }: Options) {
   const targetRef = useRef(0);
   const currentRef = useRef(0);
   const drawnRef = useRef(-1);
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef(0);
+  const pendingRef = useRef(false);
   const sizeRef = useRef({ width: 0, height: 0 });
-  const brightnessRef = useRef(1);
 
   const paint = (index: number) => {
     const canvas = canvasRef.current;
@@ -82,12 +88,11 @@ export function useFrameScrubber({
     const dx = (width - drawWidth) / 2;
     const dy = (height - drawHeight) / 2;
 
-    // Cinematic grade, baked into the draw call instead of a CSS filter.
-    if ("filter" in ctx) {
-      ctx.filter = `brightness(${brightnessRef.current.toFixed(3)}) contrast(1.06) saturate(1.02)`;
-    }
+    // One plain drawImage. No ctx.filter and no alpha compositing: a filter
+    // string here is applied per draw on the CPU and is the single most
+    // expensive thing you can do in a scroll loop. The cinematic grade is
+    // handled by the compositor instead (see Hero.tsx).
     ctx.drawImage(img, dx, dy, drawWidth, drawHeight);
-    if ("filter" in ctx) ctx.filter = "none";
     drawnRef.current = index;
   };
 
@@ -112,6 +117,7 @@ export function useFrameScrubber({
     if (index !== drawnRef.current) paint(index);
 
     if (!isSettled(currentRef.current, target)) schedule();
+    else pendingRef.current = false;
   };
 
   const resize = () => {
@@ -120,7 +126,7 @@ export function useFrameScrubber({
     if (!canvas || !parent) return;
     // Layout size, not the transformed box — the canvas is scaled by a
     // motion value and getBoundingClientRect() would include that scale.
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     const width = Math.max(1, Math.round(parent.clientWidth * dpr));
     const height = Math.max(1, Math.round(parent.clientHeight * dpr));
     if (canvas.width === width && canvas.height === height) return;
@@ -139,14 +145,6 @@ export function useFrameScrubber({
     // instead of a hard black band.
     paint(frameSequence.nearest(currentRef.current));
   };
-
-  // Unconditional hook: fall back to a constant when no grade is supplied.
-  const staticBrightness = useMotionValue(1);
-  useMotionValueEvent(brightness ?? staticBrightness, "change", (value) => {
-    brightnessRef.current = value;
-    drawnRef.current = -1;
-    schedule();
-  });
 
   // Scroll drives the target frame index — nothing else does, so scroll
   // position and sequence position can never disagree.
@@ -168,13 +166,22 @@ export function useFrameScrubber({
 
     resize();
 
+    // Coalesce resize bursts (mobile URL-bar collapse fires a storm of these)
+    // into a single repaint per frame.
+    let resizeFrame: number | null = null;
     const observer = new ResizeObserver(() => {
-      resize();
-      schedule();
+      if (resizeFrame !== null) return;
+      resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = null;
+        resize();
+        schedule();
+      });
     });
     observer.observe(parent);
 
-    // Frames arriving progressively can sharpen the current position.
+    // Frames arriving progressively can sharpen the current position. nearest()
+    // only ever returns a ready frame, and drawnRef is itself ready, so any
+    // difference is a strict improvement — no need to guard further.
     const unsubscribe = frameSequence.subscribe(() => {
       const index = frameSequence.nearest(currentRef.current);
       if (index !== drawnRef.current) paint(index);
@@ -191,12 +198,13 @@ export function useFrameScrubber({
 
     return () => {
       observer.disconnect();
+      if (resizeFrame !== null) cancelAnimationFrame(resizeFrame);
       unsubscribe();
       document.removeEventListener("visibilitychange", onVisibility);
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [canvasRef, enabled, stillIndex, smoothing]);
+  }, [canvasRef, enabled, stillIndex, smoothing, progress]);
 
   return { paint };
 }

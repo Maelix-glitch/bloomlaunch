@@ -127,10 +127,20 @@ class FrameSequence {
    * Begin loading. `"still"` fetches only the first frame (reduced motion or
    * data-saver), `"sequence"` runs the coarse pass then fills the gaps.
    */
-  start(mode: "sequence" | "still" = "sequence") {
-    if (this.started) return;
-    this.started = true;
+  /**
+   * Upgrade a still-only session to the full sequence — used when a visitor
+   * with reduce-motion enabled explicitly asks to play the animation.
+   */
+  ensureSequence() {
+    if (!this.started) {
+      this.start("sequence");
+      return;
+    }
+    if (this.planned > 1) return;
+    this.buildOrder("sequence");
+  }
 
+  private buildOrder(mode: "sequence" | "still") {
     if (mode === "still") {
       this.coarseSet = new Set([0]);
       this.coarseTotal = 1;
@@ -156,13 +166,23 @@ class FrameSequence {
     const order = isLightConnection() ? coarse : [...coarse, ...rest];
     this.order = order;
     this.planned = order.length;
+    this.cursor = 0;
     this.pump();
+  }
+
+  start(mode: "sequence" | "still" = "sequence") {
+    if (this.started) return;
+    this.started = true;
+    this.buildOrder(mode);
   }
 
   private pump() {
     while (this.inFlight < CONCURRENCY && this.cursor < this.order.length) {
       const index = this.order[this.cursor];
       this.cursor += 1;
+      // Already decoded or in flight — an upgraded session re-walks the same
+      // order, so anything we already asked for must not be fetched twice.
+      if (this.images[index] || this.ready[index]) continue;
       this.inFlight += 1;
       this.load(index);
     }
@@ -175,7 +195,13 @@ class FrameSequence {
       index < this.coarseTotal ? "high" : "low";
     this.images[index] = img;
 
+    let settled = false;
     const settle = (ok: boolean) => {
+      // An image must only ever settle once. Without this, any second
+      // invocation path would decrement the in-flight count twice and inflate
+      // the progress counters past 100%.
+      if (settled) return;
+      settled = true;
       this.inFlight -= 1;
 
       if (!ok) {
@@ -192,8 +218,10 @@ class FrameSequence {
       }
 
       this.ready[index] = true;
-      // Warm the decode cache so scrubbing never blocks on a decode.
-      void img.decode?.().catch(() => undefined);
+      // Deliberately NOT calling img.decode() here. Forcing a decode for every
+      // frame makes the browser retain all 192 full-resolution bitmaps
+      // (~1.6 GB), so it evicts and re-decodes on every scroll — which is far
+      // worse than letting it decode the handful of frames actually on screen.
 
       if (this.coarseSet.has(index)) this.coarseLoaded += 1;
       const coarseReady = this.coarseLoaded >= this.coarseTotal;

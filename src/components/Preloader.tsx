@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { BloomGlyph } from "./Logo";
-import { useReducedMotion } from "../hooks/useReducedMotion";
+import { useMotionPreference } from "../hooks/useMotionPreference";
 import { useFrameSequenceStatus } from "../hooks/useFrameSequenceStatus";
 import { frameSequence } from "../lib/frameSequence";
 
@@ -16,13 +16,16 @@ type Phase = "loading" | "revealing" | "gone";
  * preloader does real work, it isn't a fake delay.
  */
 export function Preloader({ onDone }: { onDone: () => void }) {
-  const reduced = useReducedMotion();
+  const { playing } = useMotionPreference();
+  const reduced = !playing;
   const status = useFrameSequenceStatus();
   const [phase, setPhase] = useState<Phase>("loading");
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
 
-  // Kick off the download — the hero shares this exact promise.
+  // Kick off the download — the hero shares this exact promise. When the
+  // animation is switched off we fetch only the first frame, and the rest is
+  // pulled later if the visitor asks for it.
   useEffect(() => {
     frameSequence.start(reduced ? "still" : "sequence");
   }, [reduced]);

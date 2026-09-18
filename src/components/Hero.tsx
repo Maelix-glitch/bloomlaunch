@@ -1,9 +1,8 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { motion, useScroll, useSpring, useTransform, useMotionTemplate } from "framer-motion";
 import { useFrameScrubber } from "../hooks/useFrameScrubber";
-import { useReducedMotion } from "../hooks/useReducedMotion";
-import { POSTER_URL, STILL_URL, FRAME_COUNT } from "../lib/frameSequence";
-import { REDUCED_MOTION_STILL_INDEX } from "../lib/scrub";
+import { useMotionPreference } from "../hooks/useMotionPreference";
+import { POSTER_URL, STILL_URL, FRAME_COUNT, frameSequence } from "../lib/frameSequence";
 import { Magnetic } from "./Magnetic";
 
 /**
@@ -18,7 +17,9 @@ import { Magnetic } from "./Magnetic";
 export function Hero() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const reduced = useReducedMotion();
+  const { playing, reduced, play } = useMotionPreference();
+  // Reduced motion stills the *decorative* motion; the flat film grade stays.
+  const serene = reduced && !playing;
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -26,25 +27,28 @@ export function Hero() {
   });
   const p = useSpring(scrollYProgress, { stiffness: 110, damping: 26, mass: 0.4 });
 
-  // Scene brightness is applied inside the canvas so the graded pixels cost
-  // nothing extra to composite. It opens near 1 so handing over from the
-  // ungraded poster is invisible, then dims as the story resolves.
-  const brightness = useTransform(p, [0, 0.12, 0.3, 0.7, 1], [0.95, 1, 1, 0.9, 0.66]);
-
   useFrameScrubber({
     canvasRef,
     progress: scrollYProgress,
-    enabled: !reduced,
-    // If the canvas is ever shown without motion it holds the composed end state.
-    stillIndex: REDUCED_MOTION_STILL_INDEX,
-    brightness,
+    enabled: playing,
     smoothing: 80,
   });
+
+  // If the visitor asks for the animation after we started in still mode, pull
+  // the rest of the sequence down. The loader de-duplicates, so nothing is
+  // fetched twice.
+  useEffect(() => {
+    if (playing) frameSequence.ensureSequence();
+  }, [playing]);
 
   // Scene lighting, driven by the same progress value as the frames.
   const vignette = useTransform(p, [0, 0.4, 1], [0.85, 0.5, 0.72]);
   const grainOpacity = useTransform(p, [0, 0.5, 1], [0.2, 0.1, 0.18]);
   const bloomGlow = useTransform(p, [0, 0.25, 0.45, 0.75], [0.3, 0.7, 0.45, 0.18]);
+  // The dimming that used to live in the canvas draw call. A black overlay's
+  // opacity animates on the compositor for free, where ctx.filter was CPU work
+  // on every single scroll frame.
+  const dim = useTransform(p, [0, 0.12, 0.3, 0.7, 1], [0.05, 0, 0, 0.05, 0.34]);
 
   // Opening statement hands over to the product, then to the closing line.
   const titleOpacity = useTransform(p, [0, 0.12, 0.22], [1, 1, 0]);
@@ -62,15 +66,12 @@ export function Hero() {
   const vignetteBackground = useMotionTemplate`radial-gradient(72% 62% at 50% 46%, rgba(0,0,0,0) 38%, rgba(0,0,0,${vignette}) 100%)`;
 
   return (
-    <section id="hero" ref={sectionRef} className="relative h-[420vh]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-[#050506]">
-        {reduced ? (
-          <img
-            src={STILL_URL}
-            alt="Bloom's nine surfaces connected to a laptop by the Bloom mark"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        ) : (
+    <section id="hero" ref={sectionRef} className="relative h-[340vh]">
+      {/* 100svh, not 100vh: on mobile the URL bar collapsing changes vh mid-scroll,
+          which resizes the canvas and forces a repaint exactly when you're
+          scrubbing. svh is the stable small-viewport unit. */}
+      <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-[#050506]">
+        {playing ? (
           <>
             {/* Frame one paints instantly, before the sequence decodes */}
             <img
@@ -80,10 +81,23 @@ export function Hero() {
               fetchPriority="high"
               className="absolute inset-0 h-full w-full object-contain"
             />
-            <motion.div className="absolute inset-0" style={{ scale: canvasScale }}>
-              <canvas ref={canvasRef} className="block h-full w-full" aria-hidden="true" />
+            <motion.div className="absolute inset-0 will-change-transform" style={{ scale: canvasScale }}>
+              <canvas
+                ref={canvasRef}
+                className="block h-full w-full"
+                aria-hidden="true"
+                /* Static grade, composited on the GPU. Animating any of this per
+                   scroll frame is what makes a sequence like this stutter. */
+                style={{ filter: "contrast(1.06) saturate(1.02)" }}
+              />
             </motion.div>
           </>
+        ) : (
+          <img
+            src={STILL_URL}
+            alt="Bloom's nine surfaces connected to a laptop by the Bloom mark"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
         )}
 
         {/* Warm bloom emanating from the mark */}
@@ -91,9 +105,16 @@ export function Hero() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
-            opacity: reduced ? 0.3 : bloomGlow,
+            opacity: serene ? 0.3 : bloomGlow,
             background: "radial-gradient(34% 30% at 50% 47%, rgba(232,177,88,0.22), rgba(232,177,88,0) 72%)",
           }}
+        />
+
+        {/* Scene dimming, on the compositor */}
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-black"
+          style={{ opacity: dim }}
         />
 
         {/* Cinematic vignette + film grain */}
@@ -110,7 +131,7 @@ export function Hero() {
 
         {/* Opening statement */}
         <motion.div
-          style={reduced ? undefined : { opacity: titleOpacity, y: titleY, filter: titleBlur }}
+          style={serene ? undefined : { opacity: titleOpacity, y: titleY, filter: titleBlur }}
           className="pointer-events-none absolute inset-x-0 top-[9vh] z-20 flex flex-col items-center px-6 text-center"
         >
           <span className="text-[0.62rem] uppercase tracking-[0.42em] text-white/40">
@@ -129,14 +150,14 @@ export function Hero() {
 
         {/* Closing statement, revealed as the ecosystem docks into place */}
         <motion.div
-          style={reduced ? undefined : { opacity: finalOpacity, y: finalY }}
+          style={serene ? { opacity: 0, pointerEvents: "none" } : { opacity: finalOpacity, y: finalY }}
           className="absolute inset-x-0 bottom-[7vh] z-20 flex flex-col items-center px-6 text-center"
         >
           <h2 className="font-display text-[1.9rem] leading-[1.1] text-white drop-shadow-[0_2px_30px_rgba(0,0,0,0.9)] sm:text-[2.5rem]">
             One mark. <span className="italic text-white/65">Nine surfaces.</span>
           </h2>
           <motion.div
-            style={reduced ? undefined : { opacity: ctaOpacity }}
+            style={serene ? undefined : { opacity: ctaOpacity }}
             className="mt-7 flex flex-wrap items-center justify-center gap-4"
           >
             <Magnetic>
@@ -162,8 +183,25 @@ export function Hero() {
           </motion.div>
         </motion.div>
 
+        {/* Offer the animation to visitors whose OS asks for reduced motion.
+            The setting is respected by default; this is the way back. */}
+        {!playing && (
+          <button
+            type="button"
+            onClick={play}
+            data-cursor="hover"
+            className="absolute bottom-[7vh] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2.5 rounded-full border border-white/15 bg-black/50 px-4 py-2 text-[0.68rem] uppercase tracking-[0.18em] text-white/60 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-[#e8b158] shadow-[0_0_10px_rgba(232,177,88,0.9)]" />
+            Reduced motion is on — play the sequence
+          </button>
+        )}
+
         {/* Scrub indicator — a real readout of your position in the sequence */}
-        <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-4">
+        <div
+          className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-4"
+          style={{ opacity: serene ? 0 : 1 }}
+        >
           <span className="text-[0.6rem] uppercase tracking-[0.3em] text-white/30">Scroll</span>
           <div className="relative h-px w-24 bg-white/15">
             <motion.div

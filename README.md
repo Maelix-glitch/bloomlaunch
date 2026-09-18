@@ -52,9 +52,27 @@ no autoplay, no video element, no timeline.
   *nearest already-loaded* frame, so it never blocks or flashes blank.
 - **Progressive.** A coarse pass (every 8th frame, then the last) loads first — the scrub is
   usable after ~25 small requests; the remaining frames fill in behind it.
-- **Graded in the canvas.** Brightness/contrast are applied inside the draw call, so the
-  cinematic grade costs no extra compositing. Frames are never upscaled past a capped crop, which
-  keeps the laptop and mark framed whole on phones instead of cropping the product away.
+- **Cheap to draw.** One bare `drawImage` per frame and nothing else. The cinematic grade is a
+  *static* CSS filter composited on the GPU, and the scroll-linked dimming is a black overlay
+  whose opacity animates on the compositor — neither touches the draw call. The canvas backing
+  store is capped at 1.5× device pixels, which roughly halves the per-frame fill cost at 2×
+  displays. Frames are never upscaled past a capped crop, which keeps the laptop and mark framed
+  whole on phones instead of cropping the product away.
+
+### Two bugs worth knowing about
+
+Both were live in the first pass and both produced exactly the same complaint — "it doesn't
+react to my scroll and it isn't smooth":
+
+1. **`body { overflow-x: hidden }` silently breaks `position: sticky`.** Setting one axis to
+   `hidden` forces the other to `auto`, which makes `<body>` a scroll container and detaches the
+   sticky hero from page scroll — so the section scrolled away instead of pinning, and the frame
+   never advanced. It must be `overflow-x: clip`, which contains overflow without creating a
+   scroll container.
+2. **`ctx.filter` inside the scroll loop, and `img.decode()` on all 192 frames.** The filter is
+   applied per draw on the CPU, and forcing a decode for every frame makes the browser retain
+   every full-resolution bitmap (~1.6 GB), so it evicts and re-decodes mid-scroll. Both are gone;
+   the work now happens where it belongs — on the compositor, and lazily.
 
 `src/lib/frameSequence.ts` is a module singleton: the preloader and the hero share one download.
 
@@ -67,7 +85,8 @@ a 620 ms hold once the coarse pass lands, and after a 12 s failsafe no matter wh
 | Condition | Behaviour |
 | --- | --- |
 | Normal | Coarse pass → full 192 frames |
-| `prefers-reduced-motion: reduce` | Frame 148 held as a still; no sequence download, no motion |
+| `prefers-reduced-motion: reduce` | Frame 148 held as a still and only one frame is fetched — but the hero offers a **"play the sequence"** control, which activates the full thing and records the choice |
+| Visitor opts into motion | `ensureSequence()` upgrades the session in place — the loader de-duplicates, so nothing is fetched twice |
 | `saveData` / 2G | Coarse pass only (24 keyframes) |
 | AVIF unsupported | Falls back to the poster/still and stops downloading |
 
@@ -103,8 +122,11 @@ cream apex, gold right leg on a near-black tile. It lives in one place — `src/
 
 ## Accessibility
 
-- `prefers-reduced-motion` is read synchronously on first render — reduced-motion visitors never
-  download the sequence and get a composed still instead.
+- `prefers-reduced-motion` is read synchronously on first render. Reduced-motion visitors get a
+  composed still and download a single frame — but because macOS and Windows both switch that
+  setting on during setup, often without the owner knowing, the hero offers an explicit
+  **"Reduced motion is on — play the sequence"** control. Opting in restores motion across the
+  whole site (the `force-motion` class defeats the blanket CSS rule), and it is remembered.
 - Full `aria-label`/`aria-expanded` on the mobile menu, `aria-hidden` on decorative layers,
   `noscript` fallback with the still image, and 4.5:1+ contrast on body copy.
 - Frame sequence is decorative (`aria-hidden`); every product capture has descriptive alt text.
@@ -125,10 +147,12 @@ rendering the entire component tree through React's server renderer and by testi
 directly against the real modules with a stubbed network:
 
 - **Render smoke test** — all nine chapters, hero canvas, preloader, and every capture present; no
-  `undefined`/`NaN` in the output; every `<img>` has a real `src`.
-- **Loader test (28 checks)** — frame URL padding and clamping, coarse-pass ordering
+  `undefined`/`NaN` in the output; every `<img>` has a real `src`; no duplicate `id`s and every
+  in-page anchor resolves.
+- **Loader test (34 checks)** — frame URL padding and clamping, coarse-pass ordering
   (1, 9, 17 … 191 **then** the last frame), fill frames only after the coarse pass, progress
-  weighting, save-data mode, still mode, codec-failure fallback.
+  weighting, save-data mode, still mode, codec-failure fallback, and the still → full-sequence
+  upgrade (including that a frame is never fetched twice and a repeated upgrade is a no-op).
 - **Scrub test (15 checks)** — deterministic mapping, clamping, and reversibility: scrolling down
   and back up lands on byte-identical frame indices; 60 fps and 120 fps converge; a full sweep
   settles in 0.73 s.
@@ -137,4 +161,5 @@ directly against the real modules with a stubbed network:
 **Still worth a human pass:** the pointer feel (cursor, magnetism, tilt) and the scrub's perceived
 weight are things you have to watch. If the scrub feels too loose or too tight, one number controls
 it — `smoothing` in `useFrameScrubber` (80 ms ≈ 0.7 s to settle; try 50 for snappier, 120 for
-plusher). The hero's scroll length is the other dial: `h-[420vh]` in `Hero.tsx`.
+plusher). The hero's scroll length is the other dial: `h-[340vh]` in `Hero.tsx` — raise it and the
+whole sequence plays out over more scrolling, lower it and it snaps past faster.
