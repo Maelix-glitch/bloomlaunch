@@ -3,6 +3,7 @@ import { motion, useScroll, useSpring, useTransform, useMotionTemplate } from "f
 import { useFrameScrubber } from "../hooks/useFrameScrubber";
 import { useMotionPreference } from "../hooks/useMotionPreference";
 import { POSTER_URL, STILL_URL, FRAME_COUNT, frameSequence } from "../lib/frameSequence";
+import { CountdownLine } from "./CountdownLine";
 import { Magnetic } from "./Magnetic";
 
 /**
@@ -146,6 +147,8 @@ export function Hero() {
             Mood, cycle, habits, trackers, coaching and rewards — one intelligent ecosystem,
             growing around you.
           </p>
+          {/* The launch is the site's headline fact — it belongs on the first screen. */}
+          <CountdownLine className="mt-7" />
         </motion.div>
 
         {/* Closing statement, revealed as the ecosystem docks into place */}

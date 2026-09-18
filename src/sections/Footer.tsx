@@ -1,3 +1,4 @@
+import { CountdownLine } from "../components/CountdownLine";
 import { BloomGlyph } from "../components/Logo";
 
 const COLUMNS = [
@@ -40,6 +41,7 @@ export function Footer() {
           <p className="mt-4 text-[0.85rem] leading-relaxed text-white/40">
             A calmer you, a brighter tomorrow.
           </p>
+          <CountdownLine variant="pill" className="mt-5" />
         </div>
 
         <div className="grid grid-cols-3 gap-10 sm:gap-16">

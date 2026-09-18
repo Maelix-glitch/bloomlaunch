@@ -5,7 +5,9 @@ import { ScrollProgress } from "./components/ScrollProgress";
 import { Preloader } from "./components/Preloader";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
+import { NavCountdown } from "./components/NavCountdown";
 import { EcosystemOrbit } from "./components/EcosystemOrbit";
+import { LaunchCountdown } from "./sections/LaunchCountdown";
 import { StoryPath } from "./components/StoryPath";
 import { MoodSection } from "./sections/MoodSection";
 import { CycleSection } from "./sections/CycleSection";
@@ -36,8 +38,10 @@ export default function App() {
         aria-hidden={!entered}
       >
         <Nav />
+        <NavCountdown />
         <main>
           <Hero />
+          <LaunchCountdown />
           <EcosystemOrbit />
           <StoryPath />
           <MoodSection />

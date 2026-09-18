@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BloomGlyph } from "./Logo";
 import { searchItems, type Searchable } from "../lib/search";
+import { useCountdown } from "../hooks/useCountdown";
+import { formatClock } from "../lib/countdown";
 
 type Command = Searchable & {
   href: string;
@@ -21,6 +23,7 @@ const COMMANDS: Command[] = [
   { id: "championship", title: "Championship", group: "Surfaces", href: "#championship", hint: "A 45-day arc, built to finish", keywords: "challenge progress arc 45 day" },
   { id: "atelier", title: "Atelier", group: "Surfaces", href: "#atelier", hint: "The ecosystem, made yours", keywords: "themes palettes colours customise design" },
   { id: "profile", title: "Profile", group: "Surfaces", href: "#profile", hint: "You, at the centre of your record", keywords: "identity achievements goals insights account" },
+  { id: "launch", title: "Launch countdown", group: "Actions", href: "#launch", hint: "Live, to the hundredth", keywords: "launch countdown timer opens live date time calendar premiere" },
   { id: "tour", title: "Tour the ecosystem", group: "Actions", href: "#ecosystem", hint: "See how all nine connect", keywords: "map living orbit explore" },
   { id: "story", title: "How it works", group: "Actions", href: "#story", hint: "The eight-step arc", keywords: "steps understand track discover improve" },
   { id: "top", title: "Back to the top", group: "Actions", href: "#top", hint: "Replay the sequence", keywords: "home start scroll up beginning" },
@@ -56,6 +59,10 @@ export function CommandPalette() {
   const [cursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Ticking only while open: a closed palette should cost the page nothing.
+  const countdown = useCountdown({ precision: "seconds", enabled: open });
+  const launchClock = countdown.live ? "Live now" : formatClock(countdown.remaining.total);
 
   const results = useMemo(() => searchItems(query, COMMANDS, 12), [query]);
 
@@ -227,7 +234,9 @@ export function CommandPalette() {
                             <Highlight text={result.item.title} positions={result.positions} />
                           </span>
                           <span className="block truncate text-[0.75rem] text-white/35">
-                            {result.item.hint}
+                            {result.item.id === "launch"
+                              ? `${launchClock} — the doors open`
+                              : result.item.hint}
                           </span>
                         </span>
                         <span

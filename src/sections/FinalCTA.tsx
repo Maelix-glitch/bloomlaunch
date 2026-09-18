@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { BloomMark } from "../components/Logo";
 import { RevealScale } from "../components/Reveal";
+import { CountdownLine } from "../components/CountdownLine";
 import { Magnetic } from "../components/Magnetic";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
@@ -42,6 +43,8 @@ export function FinalCTA() {
         <p className="mt-5 max-w-sm text-[0.98rem] text-white/50">
           Your life, understood, guided, and gently kept — one ecosystem away.
         </p>
+
+        <CountdownLine className="mt-7" label="Doors open in" />
 
         <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
           <Magnetic strength={10}>

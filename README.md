@@ -26,11 +26,15 @@ public/
   favicon.svg                   the Bloom arch
   og.jpg                        social preview, pulled from the sequence itself
 src/
-  components/   Hero, Nav, Cursor, Magnetic, TiltCard, PanelFrame, ProductPanel,
-                Preloader, Reveal, StoryPath, ScrollProgress, Logo, EcosystemOrbit
-  sections/     the nine chapters, FinalCTA, Footer
-  hooks/        useFrameScrubber, useFrameSequenceStatus, useReducedMotion
-  lib/          frameSequence (loader), scrub (hero math), assets
+  components/   Hero, Nav, NavCountdown, Cursor, Magnetic, TiltCard, PanelFrame, ProductPanel,
+                Preloader, Reveal, StoryPath, ScrollProgress, Logo, EcosystemOrbit,
+                LivingMap, CommandPalette, CountdownField, DigitRoller, CountdownLine
+  sections/     the nine chapters, LaunchCountdown, FinalCTA, Footer
+  hooks/        useFrameScrubber, useFrameSequenceStatus, useReducedMotion,
+                useMotionPreference, useCountdown
+  lib/          frameSequence (loader), scrub (hero math), assets, constellation (map
+                geometry), search (palette matching), odometer (digit columns),
+                countdown (window, formatting, calendar file), launchClock (the one clock)
 ```
 
 The `frames/` and `hero/` folders are the original sources and stay untouched — everything the
@@ -120,12 +124,49 @@ composition is drawn once and left still.
 
 `⌘K` / `Ctrl+K` — or the **Search** button in the nav, or the mobile menu.
 
-Thirteen destinations: the nine surfaces plus the tour, the arc and back-to-top. Matching is a
+Fourteen destinations: the nine surfaces, the launch countdown, the tour, the arc and
+back-to-top — the countdown entry carries the live reading in its hint. Matching is a
 subsequence fuzzy matcher (`src/lib/search.ts`) with bonuses for consecutive runs, word starts and
 whole-string containment, so `dsh` finds Dashboard, `sleep` finds Trackers and `45` finds
 Championship. Matched characters are highlighted in gold, results are grouped by kind, `↑↓`
 navigate and `↵` jumps — smooth-scrolling to that section. It is the fastest way to prove the
 product is real, and it costs nothing on a page with no backend.
+
+## The launch countdown
+
+The site is an event, not a brochure: there is a real 24-hour countdown running to the moment
+Bloom opens, and every page carries it.
+
+- **One clock for the whole site** (`src/lib/launchClock.ts`). The hero line, the nav badge, the
+  odometer and the footer all subscribe to a single `requestAnimationFrame` loop and a single
+  resolved window. Two independent tickers would eventually disagree by a frame, and a page showing
+  two different numbers for the same moment is worse than one that shows none.
+- **A mechanical odometer** (`src/components/DigitRoller.tsx` + `src/lib/odometer.ts`). Each digit
+  is its own fixed-width column of eleven cells — `0…9` with a trailing `0`, so a carry rolls
+  forward like a counter instead of snapping back. Hours, minutes and seconds each roll on
+  transition; the hundredths place is a continuously turning wheel, redrawn from the clock rather
+  than animated, so it can never drift out of step with the seconds.
+- **The field answers it.** Behind the digits, a canvas emits a pulse ring on every real
+  clock-second, particles drift through it, and the whole field leans toward the pointer
+  (`src/components/CountdownField.tsx`).
+- **The copy escalates.** `stageCopy` moves through the last stretch, the final hour, the final
+  minutes and the last sixty seconds, so the page changes personality as the moment approaches.
+- **It ends properly.** When the count reaches zero the digits give way to a live stage, the field
+  fires a burst, and every counter on the site flips to *Live*. If a launch date is configured it
+  is an absolute fact: the window never restarts, so a visitor arriving the day after launch finds
+  the doors open rather than a fresh 24-hour countdown to a moment that has already passed.
+- **Real utility.** The `.ics` download is a valid RFC 5545 calendar file — CRLF line endings,
+  75-octet folded lines, escaped text, and a 15-minute alarm — so the launch can genuinely be put
+  in someone's calendar. The local and UTC readings are both printed, and the window's opening
+  moment is shown alongside a progress strip.
+
+Set the real date in one place — `LAUNCH_AT` in `src/lib/countdown.ts`, an ISO string **with an
+explicit offset** (for example `2026-10-01T20:00:00+05:30`), so it resolves identically in every
+visitor's timezone. With no date configured the site falls back to a rolling 24-hour window
+anchored to a visitor's first visit, remembered in `localStorage`.
+
+The countdown is deliberately not only a section: it appears in the hero, in the nav badge, in the
+command palette, in the closing call to action and in the footer.
 
 ## The premium layer
 
@@ -195,6 +236,21 @@ directly against the real modules with a stubbed network:
   fades peak mid-arc, the pointer pulls points toward it without ever overshooting, influence
   decays monotonically, hover targeting picks the nearest node and returns -1 outside the radius,
   and `withAlpha` parses, expands and clamps.
+- **Launch clock test (28 checks)** — a fake `requestAnimationFrame`, a fake DOM and a fake wall
+  clock drive the shared clock directly: every subscriber reads one window (same object identity),
+  the fast subscriber redraws about 30×/second and the seconds subscriber exactly once, no frame
+  arrives inside the 33 ms budget, five seconds of ticking never re-resolves the window, a hidden
+  tab stops drawing and leaves no frame scheduled, returning to the tab pushes a reading that has
+  caught up **before** it notifies anyone, the flip to live is pushed to even the slowest
+  subscriber, remaining clamps at zero, and teardown stops the loop and drops the visibility
+  listener.
+- **Countdown test (104 checks)** — window resolution (a configured date wins and never restarts,
+  an expired one reads live rather than starting over, the boundary is inclusive), anchor reuse and
+  stale anchors, digit splitting with zero padding and hour clamping, the escalating stage copy,
+  local and UTC formatting, odometer cell alignment (every digit shows itself at its own offset,
+  and no input can blank the window), and the calendar file’s RFC 5545 structure: CRLF endings,
+  balanced `BEGIN`/`END` pairs, 75-octet folding with space continuations, escaping, and the
+  −15-minute alarm.
 - **Search test (32 checks)** — prefix beats mid-string, subsequence order is respected, highlights
   are correct and ascending, consecutive runs beat scattered hits, word starts beat mid-word, and
   twelve realistic palette queries (`dsh`, `sleep`, `gold`, `45`, `theme`, `conn`, …) all resolve
