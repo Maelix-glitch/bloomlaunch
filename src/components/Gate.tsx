@@ -100,19 +100,6 @@ export function Gate() {
     };
   }, [live, stage, reduced]);
 
-  // ⏳ TEMPORARY REHEARSAL LOOP — dev-only. Whenever the site stands open in
-  // the dev preview, reload a few seconds later so the gate ceremony —
-  // final ten included — plays again on a loop, even across hot reloads.
-  // `?unlocked` still stands the gate open for studio work. REMOVE with the
-  // rehearsal lock in launchClock when told to retrieve.
-  useEffect(() => {
-    if (stage !== "done") return;
-    if (!((import.meta as { env?: { DEV?: boolean } }).env?.DEV)) return;
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("unlocked")) return;
-    const t = window.setTimeout(() => window.location.reload(), 4000);
-    return () => window.clearTimeout(t);
-  }, [stage]);
-
   // While the gate stands, the page beneath it does not scroll.
   useEffect(() => {
     const root = document.documentElement;

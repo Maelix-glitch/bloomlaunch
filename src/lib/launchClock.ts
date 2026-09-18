@@ -86,16 +86,6 @@ function overrideAnchor(now: number): number | null {
     }
   }
 
-  // ⏳ TEMPORARY REHEARSAL LOCK — the studio is watching the final seconds.
-  // Only the dev server honours it (production builds and the headless
-  // suites never see import.meta.env.DEV), so a plain visit runs the whole
-  // ceremony in about 25 seconds instead of 24 hours. REMOVE THIS BLOCK when
-  // told to retrieve — the normal rolling 24-hour gate returns.
-  const REHEARSAL_SECONDS = 25;
-  if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
-    return now - (WINDOW_MS - REHEARSAL_SECONDS * 1000);
-  }
-
   return null;
 }
 
