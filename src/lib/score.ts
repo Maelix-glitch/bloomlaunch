@@ -271,18 +271,6 @@ export const score = {
     sub.start(t0);
     sub.stop(t0 + 4);
 
-    // Air leaving the room.
-    const nz = c.createBufferSource();
-    nz.buffer = noiseBuffer(c, 2.6);
-    const hp = c.createBiquadFilter();
-    hp.type = "highpass";
-    hp.frequency.value = 700;
-    const ng = c.createGain();
-    ng.gain.setValueAtTime(0.0001, t0);
-    ng.gain.linearRampToValueAtTime(0.09, t0 + 0.15);
-    ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.5);
-    nz.connect(hp).connect(ng).connect(m);
-    nz.start(t0);
   },
 
   /**
