@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bloom — Your life, in bloom.</title>
+    <meta
+      name="description"
+      content="Bloom brings mood, cycle, habits, trackers, coaching and rewards into one intelligent personal ecosystem — nine surfaces orbiting a single mark."
+    />
+    <meta name="theme-color" content="#050506" />
+    <meta name="color-scheme" content="dark" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/og.jpg" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Bloom — Your life, in bloom." />
+    <meta
+      property="og:description"
+      content="Mood, cycle, habits, trackers, coaching and rewards — one intelligent ecosystem for becoming your best self."
+    />
+    <meta property="og:image" content="/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Bloom — Your life, in bloom." />
+    <meta
+      name="twitter:description"
+      content="Nine surfaces, one intelligence. Bloom keeps your whole life in one calm, connected record."
+    />
+    <meta name="twitter:image" content="/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- The overture starts downloading the hero sequence before React boots. -->
+    <link rel="modulepreload" href="/src/main.tsx" />
+    <link rel="preload" as="image" href="/frames/poster.webp" fetchpriority="high" />
+
+    <style>
+      /* Paint the brand background immediately — no white flash before hydration. */
+      html,
+      body {
+        margin: 0;
+        background: #050506;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <div style="padding: 48px; color: #f5f5f8; font-family: system-ui, sans-serif">
+        <h1 style="font-family: Georgia, serif; font-weight: 400">Bloom — your life, in bloom.</h1>
+        <p style="color: rgba(245,245,248,0.6); max-width: 44ch">
+          Mood, cycle, habits, trackers, coaching and rewards in one intelligent ecosystem.
+          Please enable JavaScript to explore the full experience.
+        </p>
+        <img src="/frames/still.webp" alt="Bloom's nine surfaces connected to a laptop by the Bloom mark"
+             style="width: 100%; max-width: 1100px; margin-top: 32px; border-radius: 16px" />
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

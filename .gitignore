@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.local
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+
+# Scratch (generated during asset work, not part of the site)
+src_zip/
+*_preview*.jpg
+*_sim_*.png
+*_sim_*.jpg
+_sim_*.png
