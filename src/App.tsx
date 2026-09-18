@@ -68,7 +68,9 @@ export default function App() {
         <NavCountdown />
         <main>
           <Hero />
-          <LaunchCountdown />
+          {/* The countdown is the ceremony; once it is over, its screen
+              disappears and the site reads as the product it launched. */}
+          {!gate.open && <LaunchCountdown />}
           <BriefGallery />
           <EcosystemOrbit />
           <StoryPath />

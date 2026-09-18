@@ -65,12 +65,12 @@ export function ProductPanel({
               <source srcSet={shotUrl(shot, "avif")} type="image/avif" />
               <source srcSet={shotUrl(shot, "webp")} type="image/webp" />
               <img
+                loading="lazy"
+                decoding="async"
                 src={shotUrl(shot, "webp")}
                 alt={alt}
                 width={2200}
                 height={1375}
-                loading="lazy"
-                decoding="async"
                 onLoad={() => setLoaded(true)}
                 className="block h-auto w-full transition-opacity duration-700"
                 style={{ opacity: loaded ? 1 : 0 }}

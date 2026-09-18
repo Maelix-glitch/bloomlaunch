@@ -204,10 +204,12 @@ visitor's timezone. Until then it is unset (`null`) and the site counts a rollin
 anchored to each visitor's first visit and remembered in `localStorage` — always a real, running
 24-hour countdown rather than a placeholder date that silently expires.
 
-Setting a date turns on the full arc: the days scale before the window opens (a launch three weeks
-out is 500 hours away, and the odometer's hour field is two digits, so it counts days instead of
-lying), the odometer takes over for the final 24 hours, and at the moment itself the section
-becomes the live stage and does not go back.
+The shared date is set — `2026-09-20T00:00:00+05:30`, the same instant for every visitor on Earth
+(change that one line to move the launch). With a date set, the full arc runs: the days scale
+before the window opens (a launch weeks out is hundreds of of hours away, and the odometer's hour
+field is two digits, so it counts days instead of lying), the odometer takes over for the final 24
+hours, and at the moment itself the doors hand the site over — and the countdown section then
+leaves the page entirely; the ceremony is over, the product remains.
 
 The countdown is deliberately not only a section: it appears in the hero, in the nav badge, in the
 command palette, in the closing call to action and in the footer.

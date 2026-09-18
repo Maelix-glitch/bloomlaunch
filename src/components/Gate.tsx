@@ -196,6 +196,8 @@ export function Gate() {
         <img
           src="/royal-lock.jpg"
           alt=""
+          decoding="async"
+          fetchPriority="high"
           draggable={false}
           onLoad={() => setLockLoaded(true)}
           className="w-full select-none"
