@@ -1,0 +1,229 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-void: #050506;
+  --color-charcoal: #0a0b0f;
+  --color-surface: #0e1015;
+  --color-surface-2: #14161d;
+  --color-hairline: rgba(255, 255, 255, 0.08);
+  --color-hairline-soft: rgba(255, 255, 255, 0.05);
+
+  --color-bloom-green: #7fb88f;
+  --color-bloom-gold: #e8b158;
+  --color-bloom-cream: #f3e6c9;
+  --color-bloom-violet: #8d7bf2;
+  --color-bloom-pink: #e191b3;
+  --color-bloom-blue: #7ba7d9;
+
+  --animate-breathe: breathe 6s ease-in-out infinite;
+  --animate-orbit: orbit 40s linear infinite;
+  --animate-orbit-rev: orbit-rev 52s linear infinite;
+  --animate-drift: drift 10s ease-in-out infinite;
+  --animate-sheen: sheen 7s ease-in-out infinite;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: var(--color-void);
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-void);
+  color: rgba(245, 245, 248, 0.92);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* `clip`, never `hidden`. `overflow-x: hidden` forces overflow-y to `auto`,
+     which turns <body> into a scroll container and silently breaks
+     `position: sticky` on the hero — the section scrolls away instead of
+     pinning, so the frame sequence never advances. `clip` contains overflow
+     without creating a scroll container. */
+  overflow-x: clip;
+}
+
+/* The custom pointer only takes over once Cursor.tsx has mounted and
+   confirmed a fine pointer — the native cursor is never removed blind. */
+@media (pointer: fine) {
+  html.has-bloom-cursor,
+  html.has-bloom-cursor * {
+    cursor: none !important;
+  }
+  /* Fields keep a real caret cursor — the custom pointer never covers typing. */
+  html.has-bloom-cursor input,
+  html.has-bloom-cursor textarea,
+  html.has-bloom-cursor select {
+    cursor: auto !important;
+  }
+}
+
+::selection {
+  background: var(--color-bloom-gold);
+  color: #14100a;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-void);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2b2d36, #1b1d24);
+  border-radius: 999px;
+  border: 2px solid var(--color-void);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #3a3d47, #23252d);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.perspective-dramatic {
+  perspective: 2200px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Fine gold hairline used to separate chapters */
+.hairline-gold {
+  background-image: linear-gradient(90deg, transparent, rgba(232, 177, 88, 0.35), transparent);
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbit-rev {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes brief-spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+@keyframes brief-mist {
+  from { transform: translate3d(-6%, -2%, 0) scale(1); }
+  to { transform: translate3d(6%, 3%, 0) scale(1.18); }
+}
+
+/* The brief carousel's orbit radius, responsive. */
+.brief-ring { --brief-z: clamp(170px, 30vmin, 270px); }
+.brief-card { backface-visibility: hidden; }
+
+@keyframes gate-aura {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes gate-shimmer {
+  0% { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
+}
+
+@keyframes gate-grain {
+  0% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-2%, 1%, 0); }
+  50% { transform: translate3d(1%, -2%, 0); }
+  75% { transform: translate3d(-1%, 2%, 0); }
+  100% { transform: translate3d(2%, -1%, 0); }
+}
+
+@keyframes gate-flicker {
+  0%, 100% { opacity: 0.16; }
+  8% { opacity: 0.4; }
+  14% { opacity: 0.2; }
+  36% { opacity: 0.5; }
+  42% { opacity: 0.22; }
+  68% { opacity: 0.44; }
+  74% { opacity: 0.18; }
+}
+
+@keyframes gate-aura-fast {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes gate-breathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+
+/* Gilded numerals: gold plate with a light that keeps passing over them. */
+.gilded {
+  background: linear-gradient(
+    100deg,
+    #f3e6c9 18%,
+    #e8b158 36%,
+    #fff6dd 50%,
+    #e8b158 64%,
+    #f3e6c9 82%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gate-shimmer 5.5s linear infinite;
+}
+
+@keyframes sheen {
+  0%, 100% { opacity: 0.35; transform: translateX(-8%); }
+  50% { opacity: 0.7; transform: translateX(8%); }
+}
+
+/* Reduced motion: the system setting is honoured, and `:not(.force-motion)`
+   lets the hero's explicit "play the sequence" control opt back in. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  html:not(.force-motion) *,
+  html:not(.force-motion) *::before,
+  html:not(.force-motion) *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The reverse override: still everything even on a system that allows motion. */
+html.force-still *,
+html.force-still *::before,
+html.force-still *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
