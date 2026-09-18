@@ -9,14 +9,18 @@
  * The launch moment, as an ISO 8601 string with an explicit offset.
  *
  * ⚠️ ONE LINE TO CHANGE FOR THE REAL LAUNCH. Set this to the actual moment the
- * app goes live and the whole site follows — the section, the nav badge, the
- * calendar file and the takeover all read from here.
+ * app goes live — an ISO string **with an explicit offset**, e.g.
+ * `"2026-10-01T20:00:00+05:30"` — and the whole site follows: the section, the
+ * nav badge, the hero line, the footer, the calendar file and the takeover all
+ * read from here.
  *
- * If this is in the past (or left unset) the site falls back to a rolling
- * 24-hour window anchored to the visitor's first visit, so the countdown is
- * always live rather than showing negative time.
+ * Left unset (null) the site counts down a rolling 24-hour window anchored to
+ * each visitor's first visit, so it is always a live, running 24-hour
+ * countdown rather than negative time or a stale date. That is the right
+ * default until the real date is known — a placeholder date would silently
+ * expire and leave the site sitting in its "live" state.
  */
-export const LAUNCH_AT: string | null = "2026-09-19T20:00:00+05:30";
+export const LAUNCH_AT: string | null = null;
 
 /** Length of the launch window. */
 export const WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -97,6 +101,8 @@ export function writeAnchor(value: number): void {
 }
 
 export type Remaining = {
+  /** whole days, when the target is further off than the 24-hour window */
+  days: number;
   hours: number;
   minutes: number;
   seconds: number;
@@ -104,7 +110,8 @@ export type Remaining = {
   milliseconds: number;
   /** fractional rotation 0 → 1 through the current second */
   secondFraction: number;
-  /** the four digits of the hour field, zero padded */
+  /** the digits of each field, zero padded to a pair */
+  dayDigits: [number, number];
   hourDigits: [number, number];
   minuteDigits: [number, number];
   secondDigits: [number, number];
@@ -120,11 +127,13 @@ export function splitRemaining(ms: number): Remaining {
   const milliseconds = safe % 1000;
 
   return {
+    days: Math.floor(hours / 24),
     hours,
     minutes,
     seconds,
     milliseconds,
     secondFraction: milliseconds / 1000,
+    dayDigits: digitsOf(Math.floor(hours / 24)),
     hourDigits: digitsOf(hours),
     minuteDigits: digitsOf(minutes),
     secondDigits: digitsOf(seconds),
@@ -135,6 +144,21 @@ export function splitRemaining(ms: number): Remaining {
 function digitsOf(value: number): [number, number] {
   const clamped = Math.max(0, Math.min(99, Math.floor(value)));
   return [Math.floor(clamped / 10), clamped % 10];
+}
+
+export type Phase = "before" | "window" | "live";
+
+/**
+ * Where we are relative to the launch.
+ *
+ * "before" is everything up to the window opening — the time before the final
+ * 24 hours, which is where a real launch date usually sits for weeks. The
+ * odometer only makes sense inside the window: its hour field is two digits.
+ */
+export function windowPhase(now: number, window_: Pick<Window, "start" | "end">): Phase {
+  if (now >= window_.end) return "live";
+  if (now < window_.start) return "before";
+  return "window";
 }
 
 /** How far through the 24-hour window we are, 0 → 1. */
@@ -152,8 +176,18 @@ export function clamp01(v: number): number {
  * Copy that escalates as the moment approaches. This is the thing that makes a
  * countdown feel like an event rather than a clock.
  */
-export function stageCopy(remaining: number, live: boolean): { eyebrow: string; headline: string } {
+export function stageCopy(
+  remaining: number,
+  live: boolean,
+  phase: Phase = "window"
+): { eyebrow: string; headline: string } {
   if (live) return { eyebrow: "The wait is over", headline: "Bloom is live." };
+  if (phase === "before") {
+    const days = Math.floor(remaining / 86_400_000);
+    if (days >= 2) return { eyebrow: `${days} days out`, headline: "Counting down to the final day." };
+    if (days === 1) return { eyebrow: "One day out", headline: "The final 24 hours begin tomorrow." };
+    return { eyebrow: "Almost time", headline: "The final 24 hours begin soon." };
+  }
   const minutes = remaining / 60_000;
   if (minutes <= 1) return { eyebrow: "Sixty seconds", headline: "Hold your breath." };
   if (minutes <= 10) return { eyebrow: "The final minutes", headline: "Almost there." };

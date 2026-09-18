@@ -162,8 +162,14 @@ Bloom opens, and every page carries it.
 
 Set the real date in one place — `LAUNCH_AT` in `src/lib/countdown.ts`, an ISO string **with an
 explicit offset** (for example `2026-10-01T20:00:00+05:30`), so it resolves identically in every
-visitor's timezone. With no date configured the site falls back to a rolling 24-hour window
-anchored to a visitor's first visit, remembered in `localStorage`.
+visitor's timezone. Until then it is unset (`null`) and the site counts a rolling 24-hour window
+anchored to each visitor's first visit and remembered in `localStorage` — always a real, running
+24-hour countdown rather than a placeholder date that silently expires.
+
+Setting a date turns on the full arc: the days scale before the window opens (a launch three weeks
+out is 500 hours away, and the odometer's hour field is two digits, so it counts days instead of
+lying), the odometer takes over for the final 24 hours, and at the moment itself the section
+becomes the live stage and does not go back.
 
 The countdown is deliberately not only a section: it appears in the hero, in the nav badge, in the
 command palette, in the closing call to action and in the footer.
@@ -236,7 +242,7 @@ directly against the real modules with a stubbed network:
   fades peak mid-arc, the pointer pulls points toward it without ever overshooting, influence
   decays monotonically, hover targeting picks the nearest node and returns -1 outside the radius,
   and `withAlpha` parses, expands and clamps.
-- **Launch clock test (28 checks)** — a fake `requestAnimationFrame`, a fake DOM and a fake wall
+- **Launch clock test (29 checks)** — a fake `requestAnimationFrame`, a fake DOM and a fake wall
   clock drive the shared clock directly: every subscriber reads one window (same object identity),
   the fast subscriber redraws about 30×/second and the seconds subscriber exactly once, no frame
   arrives inside the 33 ms budget, five seconds of ticking never re-resolves the window, a hidden
@@ -244,13 +250,15 @@ directly against the real modules with a stubbed network:
   caught up **before** it notifies anyone, the flip to live is pushed to even the slowest
   subscriber, remaining clamps at zero, and teardown stops the loop and drops the visibility
   listener.
-- **Countdown test (104 checks)** — window resolution (a configured date wins and never restarts,
+- **Countdown test (123 checks)** — window resolution (a configured date wins and never restarts,
   an expired one reads live rather than starting over, the boundary is inclusive), anchor reuse and
   stale anchors, digit splitting with zero padding and hour clamping, the escalating stage copy,
   local and UTC formatting, odometer cell alignment (every digit shows itself at its own offset,
   and no input can blank the window), and the calendar file’s RFC 5545 structure: CRLF endings,
   balanced `BEGIN`/`END` pairs, 75-octet folding with space continuations, escaping, and the
-  −15-minute alarm.
+  −15-minute alarm. It also pins the phase model: the odometer only exists inside the window, days
+  are split out before it, an unset launch date always yields a running 24-hour window, and the
+  pre-window copy counts in days.
 - **Search test (32 checks)** — prefix beats mid-string, subsequence order is respected, highlights
   are correct and ascending, consecutive runs beat scattered hits, word starts beat mid-word, and
   twelve realistic palette queries (`dsh`, `sleep`, `gold`, `45`, `theme`, `conn`, …) all resolve

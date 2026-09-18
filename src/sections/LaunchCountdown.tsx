@@ -5,7 +5,7 @@ import { DigitPair, RollWheel } from "../components/DigitRoller";
 import { BloomGlyph } from "../components/Logo";
 import { Magnetic } from "../components/Magnetic";
 import { useCountdown } from "../hooks/useCountdown";
-import { buildIcs, formatLocalMoment, formatUtcMoment, stageCopy } from "../lib/countdown";
+import { buildIcs, formatLocalMoment, formatUtcMoment, stageCopy, windowPhase } from "../lib/countdown";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -17,6 +17,13 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  * fast wheel have to fit inside 360px minus page padding.
  */
 const DIGIT_SCALE = "text-[3.1rem] sm:text-[5.4rem] lg:text-[8.4rem] xl:text-[10.5rem]";
+
+/**
+ * Before the window opens the row can carry up to eight digits (days, hours,
+ * minutes, seconds), so it steps down a size to stay on one line — measured
+ * against the same 360px floor as the odometer.
+ */
+const DAYS_SCALE = "text-[2.1rem] sm:text-[3.3rem] lg:text-[4.6rem] xl:text-[5.6rem]";
 
 /** Splits a 0 → 1 progress value into whole units, for the elapsed strip. */
 function elapsedUnits(progress: number) {
@@ -38,9 +45,14 @@ function elapsedUnits(progress: number) {
 export function LaunchCountdown() {
   const reduced = useReducedMotion();
   const framerReduced = useFramerReducedMotion();
-  const { remaining, progress, live, window: launchWindow } = useCountdown({ precision: "hundredths" });
+  const { remaining, progress, live, window: launchWindow, now } = useCountdown({ precision: "hundredths" });
 
-  const copy = stageCopy(remaining.total, live);
+  // Outside the final 24 hours the odometer has nothing to say — its hour
+  // field is two digits, and a launch three weeks out is 500 hours away. The
+  // days scale takes over until the window opens.
+  const phase = windowPhase(now, launchWindow);
+
+  const copy = stageCopy(remaining.total, live, phase);
   const elapsed = elapsedUnits(progress);
   const imminent = !live && remaining.total <= 60_000;
   const [copied, setCopied] = useState(false);
@@ -154,6 +166,49 @@ export function LaunchCountdown() {
 
           {live ? (
             <LiveStage reduced={Boolean(reduced)} />
+          ) : phase === "before" ? (
+            <div className="flex flex-col items-center">
+              <div className="flex items-start justify-center gap-1.5 sm:gap-3 lg:gap-4">
+                {remaining.days > 0 && (
+                  <>
+                    <Unit
+                      digits={remaining.dayDigits}
+                      label={remaining.days === 1 ? "Day" : "Days"}
+                      imminent={false}
+                      reduced={Boolean(reduced)}
+                      scale={DAYS_SCALE}
+                    />
+                    <Separator reduced={Boolean(reduced)} scale={DAYS_SCALE} />
+                  </>
+                )}
+                <Unit
+                  digits={[Math.floor((remaining.hours % 24) / 10), remaining.hours % 10]}
+                  label={remaining.days > 0 ? "Hours" : "Hours to the window"}
+                  imminent={false}
+                  reduced={Boolean(reduced)}
+                  scale={DAYS_SCALE}
+                />
+                <Separator reduced={Boolean(reduced)} scale={DAYS_SCALE} />
+                <Unit
+                  digits={remaining.minuteDigits}
+                  label="Minutes"
+                  imminent={false}
+                  reduced={Boolean(reduced)}
+                  scale={DAYS_SCALE}
+                />
+                <Separator reduced={Boolean(reduced)} scale={DAYS_SCALE} />
+                <Unit
+                  digits={remaining.secondDigits}
+                  label="Seconds"
+                  imminent={false}
+                  reduced={Boolean(reduced)}
+                  scale={DAYS_SCALE}
+                />
+              </div>
+              <p className="mt-8 text-[0.8rem] text-white/35">
+                The countdown takes over the site for its final 24 hours.
+              </p>
+            </div>
           ) : (
             <div
               role="timer"
@@ -207,9 +262,11 @@ export function LaunchCountdown() {
         {/* The 24-hour window, filling as it runs out */}
         <div className="mx-auto mt-14 w-full max-w-2xl">
           <div className="flex items-end justify-between pb-2 text-[0.6rem] uppercase tracking-[0.28em] text-white/30">
-            <span>Window opened</span>
+            <span>{phase === "before" ? "Window opens soon" : "Window opened"}</span>
             <span className="tabular-nums text-white/50">
-              {String(elapsed.hours).padStart(2, "0")}h {String(elapsed.minutes).padStart(2, "0")}m elapsed
+              {phase === "before"
+                ? `in ${remaining.days}d ${remaining.hours % 24}h`
+                : `${String(elapsed.hours).padStart(2, "0")}h ${String(elapsed.minutes).padStart(2, "0")}m elapsed`}
             </span>
             <span>{live ? "Live" : "Launch"}</span>
           </div>
@@ -283,18 +340,20 @@ function Unit({
   label,
   imminent,
   reduced,
+  scale = DIGIT_SCALE,
 }: {
   digits: [number, number];
   label: string;
   imminent: boolean;
   reduced: boolean;
+  scale?: string;
 }) {
   return (
     <div className="flex flex-col items-center">
       <DigitPair
         digits={digits}
         duration={reduced ? 0 : 0.55}
-        className={`font-display leading-none tabular-nums text-white ${DIGIT_SCALE}`}
+        className={`font-display leading-none tabular-nums text-white ${scale}`}
       />
       <span
         className="mt-3 text-[0.5rem] uppercase tracking-[0.26em] transition-colors duration-700 sm:mt-4 sm:text-[0.62rem]"
@@ -306,11 +365,11 @@ function Unit({
   );
 }
 
-function Separator({ reduced }: { reduced: boolean }) {
+function Separator({ reduced, scale = DIGIT_SCALE }: { reduced: boolean; scale?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={`flex w-[0.34em] items-center justify-center font-display leading-none text-white/20 ${DIGIT_SCALE}`}
+      className={`flex w-[0.34em] items-center justify-center font-display leading-none text-white/20 ${scale}`}
       style={{ height: "1.14em" }}
     >
       <span className={reduced ? "" : "animate-pulse"}>:</span>

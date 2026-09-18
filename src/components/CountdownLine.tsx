@@ -19,7 +19,7 @@ export function CountdownLine({
   className?: string;
   href?: string;
 }) {
-  const { remaining, live, window: launchWindow } = useCountdown({ precision: "seconds" });
+  const { remaining, live } = useCountdown({ precision: "seconds" });
   const imminent = !live && remaining.total <= 60 * 60 * 1000;
   const clock = formatClock(remaining.total);
 
@@ -56,9 +56,6 @@ export function CountdownLine({
       >
         {live ? "Live now" : clock}
       </span>
-      {launchWindow.rolling && !live && (
-        <span className="text-[0.58rem] uppercase tracking-[0.16em] text-white/25">window</span>
-      )}
     </a>
   );
 }
