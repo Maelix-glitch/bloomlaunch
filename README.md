@@ -269,6 +269,8 @@ directly against the real modules with a stubbed network:
 - **Scrub test (15 checks)** — deterministic mapping, clamping, and reversibility: scrolling down
   and back up lands on byte-identical frame indices; 60 fps and 120 fps converge; a full sweep
   settles in 0.73 s.
+- **Countdown line test** — the hero, closing CTA and footer readouts all print the same instant,
+  visibly and in their `aria-label`, and link to the section.
 - `tsc --noEmit` clean, `vite build` clean.
 
 **Still worth a human pass:** the pointer feel (cursor, magnetism, tilt) and the scrub's perceived
