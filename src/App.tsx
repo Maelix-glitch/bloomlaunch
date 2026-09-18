@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CommandPalette } from "./components/CommandPalette";
 import { Cursor } from "./components/Cursor";
 import { ScrollProgress } from "./components/ScrollProgress";
 import { Preloader } from "./components/Preloader";
@@ -27,6 +28,7 @@ export default function App() {
     <div id="top" className="relative bg-[#050506]">
       <Cursor />
       <ScrollProgress />
+      <CommandPalette />
       <Preloader onDone={() => setEntered(true)} />
 
       <div

@@ -92,6 +92,41 @@ a 620 ms hold once the coarse pass lands, and after a 12 s failsafe no matter wh
 
 ---
 
+## The Living Map
+
+The ecosystem section is not a diagram — it is a real-time 3D system on a canvas
+(`src/components/LivingMap.tsx` + the pure geometry in `src/lib/constellation.ts`).
+
+- **Three orbits on three z-planes.** Nine surfaces ride rings at different depths, so the
+  system has genuine parallax rather than being a flat circle.
+- **Arcs, not spokes.** Every connection is a quadratic Bézier that bows off-axis, drawn with a
+  gradient that runs from the surface's own colour into gold at the core.
+- **Particles stream both ways.** 126 of them ride the arcs — mostly inward, some outward —
+  fading in at the node and out at the core so nothing ever pops. They wrap, so the field never
+  runs dry. Placement is seeded deterministically, so the composition is identical every visit.
+- **The field is physical.** The whole system turns with scroll (a ±23° yaw plus tilt) and drifts
+  on idle spin; the pointer bends everything inside a 190px radius toward it with a quadratic
+  falloff, and brightens what it touches.
+- **Hovering a surface focuses it** — the arc lights, the label lifts, and a readout underneath
+  tells you what that surface does. Because a canvas can't be navigated, the same nine
+  destinations are also real links in a row below, so keyboard and touch visitors get everything.
+
+Cost control: glow sprites are pre-rendered once per colour and blitted (never `shadowBlur`), the
+field runs at 1.5× DPR at most, the loop is driven by `IntersectionObserver` so it stops off
+screen, particle count drops ~45% under 700px wide, and under `prefers-reduced-motion` the
+composition is drawn once and left still.
+
+## Command palette
+
+`⌘K` / `Ctrl+K` — or the **Search** button in the nav, or the mobile menu.
+
+Thirteen destinations: the nine surfaces plus the tour, the arc and back-to-top. Matching is a
+subsequence fuzzy matcher (`src/lib/search.ts`) with bonuses for consecutive runs, word starts and
+whole-string containment, so `dsh` finds Dashboard, `sleep` finds Trackers and `45` finds
+Championship. Matched characters are highlighted in gold, results are grouped by kind, `↑↓`
+navigate and `↵` jumps — smooth-scrolling to that section. It is the fastest way to prove the
+product is real, and it costs nothing on a page with no backend.
+
 ## The premium layer
 
 - **Custom cursor** — a gold dot with a lagging ring that expands on interactive elements, reacts
@@ -153,6 +188,20 @@ directly against the real modules with a stubbed network:
   (1, 9, 17 … 191 **then** the last frame), fill frames only after the coarse pass, progress
   weighting, save-data mode, still mode, codec-failure fallback, and the still → full-sequence
   upgrade (including that a frame is never fetched twice and a repeated upgrade is a no-op).
+- **Living Map geometry test (63 checks)** — rotations preserve radius and are exact at 0°/360°,
+  the projection puts the origin dead centre and scales with depth, screen +y renders downward,
+  the 0.82 squash is applied exactly, arcs begin and end on their endpoints and bow off-axis,
+  arcs don't divide by zero on coincident points, particles wrap in both directions and their
+  fades peak mid-arc, the pointer pulls points toward it without ever overshooting, influence
+  decays monotonically, hover targeting picks the nearest node and returns -1 outside the radius,
+  and `withAlpha` parses, expands and clamps.
+- **Search test (32 checks)** — prefix beats mid-string, subsequence order is respected, highlights
+  are correct and ascending, consecutive runs beat scattered hits, word starts beat mid-word, and
+  twelve realistic palette queries (`dsh`, `sleep`, `gold`, `45`, `theme`, `conn`, …) all resolve
+  to the intended destination.
+- **Offline render of the Living Map** — the component's own pure functions were used to draw the
+  system with ImageMagick at four scroll angles and one hover state, to confirm the composition
+  fills the stage and that no two labels ever collide.
 - **Scrub test (15 checks)** — deterministic mapping, clamping, and reversibility: scrolling down
   and back up lands on byte-identical frame indices; 60 fps and 120 fps converge; a full sweep
   settles in 0.73 s.

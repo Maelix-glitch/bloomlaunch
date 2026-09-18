@@ -69,6 +69,18 @@ export function Nav() {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("bloom:open-palette"))}
+              data-cursor="hover"
+              aria-label="Search Bloom"
+              className="group flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] py-1.5 pl-3 pr-2 text-[0.78rem] text-white/45 transition-colors hover:border-white/25 hover:text-white/80"
+            >
+              <span>Search</span>
+              <kbd className="rounded border border-white/10 bg-black/40 px-1.5 py-0.5 font-sans text-[0.6rem] tracking-wider text-white/40">
+                ⌘K
+              </kbd>
+            </button>
             <a
               href="#cta"
               data-cursor="hover"
@@ -131,13 +143,26 @@ export function Nav() {
                   {l.label}
                 </motion.a>
               ))}
+              <motion.button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  window.dispatchEvent(new Event("bloom:open-palette"));
+                }}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4, ease: EASE }}
+                className="mt-8 rounded-full border border-white/15 px-5 py-3.5 text-center text-[0.95rem] text-white/70"
+              >
+                Search everything
+              </motion.button>
               <motion.a
                 href="#cta"
                 onClick={() => setOpen(false)}
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4, ease: EASE }}
-                className="mt-8 rounded-full bg-white px-5 py-3.5 text-center text-[0.95rem] font-medium text-black"
+                transition={{ duration: 0.5, delay: 0.45, ease: EASE }}
+                className="mt-3 rounded-full bg-white px-5 py-3.5 text-center text-[0.95rem] font-medium text-black"
               >
                 Enter Bloom
               </motion.a>
