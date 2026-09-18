@@ -500,6 +500,21 @@ export function Gate() {
         </div>
       )}
 
+      {/* As the light ebbs, one sweep of it crosses the appearing site */}
+      {revealing && !reduced && (
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 z-40 w-[60%] mix-blend-screen"
+          style={{
+            background:
+              "linear-gradient(100deg, transparent 28%, rgba(243,230,201,0.55) 50%, transparent 72%)",
+          }}
+          initial={{ x: "-80%", opacity: 0 }}
+          animate={{ x: "260%", opacity: [0, 0.55, 0] }}
+          transition={{ duration: 3.4, ease: "easeInOut", times: [0, 0.5, 1] }}
+        />
+      )}
+
       {/* Blinded: the light covers everything, then ebbs with the gate */}
       {stage !== "unsealing" && stage !== "locked" && (
         <motion.div

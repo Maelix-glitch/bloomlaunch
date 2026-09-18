@@ -127,8 +127,21 @@ export const score = {
     nz.stop(t0 + seconds + 0.2);
     riserNodes.push({ gain: ng, stop: () => nz.stop() });
 
+    // Chest pressure: a sub that rises from below hearing into feeling.
+    const sub = c.createOscillator();
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(26, t0);
+    sub.frequency.exponentialRampToValueAtTime(41, t0 + seconds);
+    const subG = c.createGain();
+    subG.gain.setValueAtTime(0.0001, t0);
+    subG.gain.linearRampToValueAtTime(0.34, t0 + seconds * 0.95);
+    sub.connect(subG).connect(m);
+    sub.start(t0);
+    sub.stop(t0 + seconds + 0.2);
+    riserNodes.push({ gain: subG, stop: () => sub.stop() });
+
     // Two detuned low voices leaning into each other as they climb.
-    for (const [start, end] of [[55, 110], [82.4, 164.8]] as const) {
+    for (const [start, end] of [[41.2, 82.4], [61.7, 123.4]] as const) {
       const osc = c.createOscillator();
       osc.type = "sawtooth";
       osc.frequency.setValueAtTime(start, t0);
@@ -179,44 +192,47 @@ export const score = {
 
     // The driven chord. Drive is a gain INTO the shaper: it starts hot and
     // distorted, then the drive and the voice fade together.
-    const ws = shaper(c, 26);
+    // The growl: C1 and G1 — a low fifth from the floor of hearing —
+    // driven hard, then the drive and the voice melt together into silence.
+    const ws = shaper(c, 30);
     const drive = c.createGain();
-    drive.gain.setValueAtTime(1.4, t0);
-    drive.gain.linearRampToValueAtTime(0.12, t0 + 2.6);
+    drive.gain.setValueAtTime(1.8, t0);
+    drive.gain.linearRampToValueAtTime(0.1, t0 + 3.2);
     const body = c.createGain();
     body.gain.setValueAtTime(0.0001, t0);
-    body.gain.linearRampToValueAtTime(0.4, t0 + 0.08);
-    body.gain.setValueAtTime(0.4, t0 + 1.2);
-    body.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.6);
+    body.gain.linearRampToValueAtTime(0.55, t0 + 0.09);
+    body.gain.setValueAtTime(0.55, t0 + 1.4);
+    body.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.4);
     const lp = c.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.setValueAtTime(2600, t0);
-    lp.frequency.exponentialRampToValueAtTime(240, t0 + 3.2);
+    lp.frequency.setValueAtTime(1400, t0);
+    lp.frequency.exponentialRampToValueAtTime(90, t0 + 3.8);
     drive.connect(ws).connect(lp).connect(body).connect(m);
-    for (const [freq, cents] of [[110, -8], [164.81, 6], [220, -4]] as const) {
+    for (const [freq, cents] of [[32.7, -7], [49, 5], [65.4, -4]] as const) {
       const o = c.createOscillator();
       o.type = "sawtooth";
       o.frequency.value = freq;
       o.detune.value = cents;
       const voice = c.createGain();
-      voice.gain.value = 0.3;
+      voice.gain.value = 0.34;
       o.connect(voice).connect(drive);
       o.start(t0);
-      o.stop(t0 + 3.8);
+      o.stop(t0 + 4.6);
     }
 
-    // The rumble sinking into the floor.
+    // The drop under the drop: felt more than heard.
     const sub = c.createOscillator();
     sub.type = "sine";
-    sub.frequency.setValueAtTime(64, t0);
-    sub.frequency.exponentialRampToValueAtTime(26, t0 + 2.4);
+    sub.frequency.setValueAtTime(48, t0);
+    sub.frequency.exponentialRampToValueAtTime(19, t0 + 3.2);
     const sg = c.createGain();
     sg.gain.setValueAtTime(0.0001, t0);
-    sg.gain.linearRampToValueAtTime(0.5, t0 + 0.1);
-    sg.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.8);
+    sg.gain.linearRampToValueAtTime(0.85, t0 + 0.12);
+    sg.gain.setValueAtTime(0.85, t0 + 0.9);
+    sg.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.8);
     sub.connect(sg).connect(m);
     sub.start(t0);
-    sub.stop(t0 + 3);
+    sub.stop(t0 + 4);
 
     // Air leaving the room.
     const nz = c.createBufferSource();
@@ -232,7 +248,11 @@ export const score = {
     nz.start(t0);
   },
 
-  /** The warm chord under the light, carrying the site's slow arrival. */
+  /**
+   * The reveal: a deep warm mass rising under the light — sub floor, low
+   * fifth, the chord above — with a high shimmer like dust in the light.
+   * This is the goosebump: enormous below, glittering above.
+   */
   swell(): void {
     if (!enabled) return;
     const c = ensure();
@@ -240,28 +260,56 @@ export const score = {
     if (c === null || m === null || c.state !== "running") return;
     const t0 = c.currentTime + 0.35;
 
+    // The floor: a sub that arrives like weight.
+    const sub = c.createOscillator();
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(27.5, t0);
+    sub.frequency.exponentialRampToValueAtTime(26, t0 + 9); // barely settling
+    const subG = c.createGain();
+    subG.gain.setValueAtTime(0.0001, t0);
+    subG.gain.linearRampToValueAtTime(0.3, t0 + 3.2);
+    subG.gain.setValueAtTime(0.3, t0 + 6);
+    subG.gain.exponentialRampToValueAtTime(0.0001, t0 + 11);
+    sub.connect(subG).connect(m);
+    sub.start(t0);
+    sub.stop(t0 + 11.5);
+
+    // The warm mass: low fifth + chord, detuned, slow-breathing lowpass.
     const lp = c.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.setValueAtTime(600, t0);
-    lp.frequency.linearRampToValueAtTime(1300, t0 + 3);
+    lp.frequency.setValueAtTime(320, t0);
+    lp.frequency.linearRampToValueAtTime(1200, t0 + 4);
+    lp.frequency.linearRampToValueAtTime(700, t0 + 9);
     const g = c.createGain();
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.linearRampToValueAtTime(0.11, t0 + 2.6);
-    g.gain.setValueAtTime(0.11, t0 + 5.5);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 10);
+    g.gain.linearRampToValueAtTime(0.16, t0 + 3);
+    g.gain.setValueAtTime(0.16, t0 + 6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 11);
     lp.connect(g).connect(m);
-
-    // A major chord, softly detuned — the royal warmth.
-    for (const [freq, cents] of [[110, -4], [164.81, 3], [220, -2], [277.18, 4], [329.63, -5]] as const) {
+    for (const [freq, cents] of [[55, -5], [82.41, 4], [110, -3], [164.81, 5], [220, -4], [277.18, 3]] as const) {
       const o = c.createOscillator();
       o.type = "sawtooth";
       o.frequency.value = freq;
       o.detune.value = cents;
       const voice = c.createGain();
-      voice.gain.value = 0.2;
+      voice.gain.value = 0.18;
       o.connect(voice).connect(lp);
       o.start(t0);
-      o.stop(t0 + 10.5);
+      o.stop(t0 + 11.5);
+    }
+
+    // The shimmer: high partials catching the light, one by one.
+    for (const [freq, at, peak] of [[1760, 1.2, 0.028], [2217.5, 2.1, 0.022], [2637, 3.2, 0.018], [3520, 4.6, 0.012]] as const) {
+      const o = c.createOscillator();
+      o.type = "sine";
+      o.frequency.value = freq;
+      const og = c.createGain();
+      og.gain.setValueAtTime(0.0001, t0 + at);
+      og.gain.linearRampToValueAtTime(peak, t0 + at + 1.4);
+      og.gain.exponentialRampToValueAtTime(0.0001, t0 + at + 6);
+      o.connect(og).connect(m);
+      o.start(t0 + at);
+      o.stop(t0 + at + 7);
     }
   },
 };
