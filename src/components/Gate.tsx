@@ -3,7 +3,6 @@ import { motion, useReducedMotion as useFramerReducedMotion } from "framer-motio
 import { CountdownField } from "./CountdownField";
 import { RollWheel } from "./DigitRoller";
 import { BloomGlyph } from "./Logo";
-import { RoyalLock } from "./RoyalLock";
 import { useCountdown } from "../hooks/useCountdown";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { buildIcs, formatLocalMoment, formatUtcMoment, stageCopy, windowPhase } from "../lib/countdown";
@@ -108,6 +107,7 @@ export function Gate() {
   }, []);
 
   const [copied, setCopied] = useState(false);
+  const [lockLoaded, setLockLoaded] = useState(false);
 
   const addToCalendar = () => {
     const ics = buildIcs({
@@ -143,8 +143,7 @@ export function Gate() {
   const gilded: CSSProperties = { color: "#eed9a4", textShadow: "0 0 28px rgba(232,177,88,0.35)" };
   const unsealing = stage !== "locked";
   const revealing = stage === "revealing";
-  const lockGlow = unsealing ? 1 : finale ? 0.5 : 0.14;
-  const lockOpacity = unsealing ? 0.62 : finale ? 0.34 : 0.17;
+  const lockOpacity = unsealing ? 1 : finale ? 0.8 : 0.5;
 
   if (stage === "done") return null;
 
@@ -180,15 +179,24 @@ export function Gate() {
       />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_50%,transparent_30%,rgba(5,5,6,0.92)_100%)]" />
 
-      {/* The royal seal: huge, faded, engraved in gold */}
+      {/* The royal seal: huge and faded, painted in old gold. The black it
+          sits on is the same black as the gate, so a screen blend makes the
+          darkness disappear and only the lock remains, glowing. */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[54%]"
-        animate={{ opacity: lockOpacity, scale: unsealing ? 1.06 : finale ? 1.02 : 1 }}
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mix-blend-screen"
+        animate={{ opacity: lockOpacity, scale: unsealing ? 1.07 : finale ? 1.02 : 1 }}
         transition={{ duration: 1.4, ease: EASE }}
-        style={{ width: "min(66vmin, 560px)" }}
+        style={{ width: "min(88vmin, 760px)" }}
       >
-        <RoyalLock open={unsealing} glow={lockGlow} className="w-full" />
+        <img
+          src="/royal-lock.jpg"
+          alt=""
+          draggable={false}
+          onLoad={() => setLockLoaded(true)}
+          className="w-full select-none"
+          style={{ opacity: lockLoaded ? 1 : 0, transition: "opacity 1.6s ease" }}
+        />
       </motion.div>
 
       {/* Film grain + flicker during the finale */}
@@ -455,22 +463,26 @@ export function Gate() {
       {/* The light, born in the keyhole */}
       {unsealing && (
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
-          <motion.div
-            className="rounded-full"
-            style={{
-              width: "70vmax",
-              height: "70vmax",
-              background:
-                "radial-gradient(circle, #fffdf5 0%, rgba(243,230,201,0.98) 24%, rgba(232,177,88,0.62) 48%, rgba(232,177,88,0) 70%)",
-            }}
-            initial={reduced ? { scale: 4, opacity: 0 } : { scale: 0.04, opacity: 0 }}
-            animate={{ scale: stage === "unsealing" ? 1.7 : 4.4, opacity: stage === "unsealing" ? [0, 0.9] : 1 }}
-            transition={
-              stage === "unsealing"
-                ? { duration: reduced ? 0.35 : 1.5, delay: reduced ? 0 : 0.45, ease: [0.3, 0.7, 0.3, 1] }
-                : { duration: 0.5, ease: "easeOut" }
-            }
-          />
+          <div className="relative" style={{ width: "min(88vmin, 760px)" }}>
+            <motion.div
+              className="absolute left-1/2 top-[64%] rounded-full"
+              style={{
+                width: "70vmax",
+                height: "70vmax",
+                marginLeft: "calc(70vmax / -2)",
+                marginTop: "calc(70vmax / -2)",
+                background:
+                  "radial-gradient(circle, #fffdf5 0%, rgba(243,230,201,0.98) 24%, rgba(232,177,88,0.62) 48%, rgba(232,177,88,0) 70%)",
+              }}
+              initial={reduced ? { scale: 4, opacity: 0 } : { scale: 0.04, opacity: 0 }}
+              animate={{ scale: stage === "unsealing" ? 1.7 : 4.4, opacity: stage === "unsealing" ? [0, 0.9] : 1 }}
+              transition={
+                stage === "unsealing"
+                  ? { duration: reduced ? 0.35 : 1.5, delay: reduced ? 0 : 0.45, ease: [0.3, 0.7, 0.3, 1] }
+                  : { duration: 0.5, ease: "easeOut" }
+              }
+            />
+          </div>
         </div>
       )}
 

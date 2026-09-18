@@ -163,17 +163,18 @@ Bloom opens, and every page carries it.
 ## The royal gate
 
 The whole site stands behind the countdown, and the countdown belongs to **the royal seal**: a
-huge, faded lock engraved in gold like something on a vault door — crowned body, filigree corners,
-a rosette around the keyhole (`src/components/RoyalLock.tsx`). The gilded odometer keeps time over
-it. The nav, the nine surfaces, the palette — everything — stays mounted underneath but sealed:
-hidden, `inert`, and unscrollable, so the hero's frames are warm at the moment of the reveal.
+huge, faded lock painted in old gold — crown, lions, fleur-de-lis and a glowing keyhole
+(`public/royal-lock.jpg`, generated for the gate). It sits on the same black as the gate, so a
+screen blend makes the darkness disappear and only the lock remains, ghosted behind the gilded
+odometer. The nav, the nine surfaces, the palette — everything — stays mounted underneath but
+sealed: hidden, `inert`, and unscrollable, so the hero's frames are warm at the moment of the
+reveal.
 
 The last ten seconds are played like a film: letterbox bars close in, film grain and flicker come
 up, the aura races, one giant numeral counts 10 → 1 alone on the screen, and the lock's keyhole
 begins to glow. At zero the gate **unseals**: the countdown dissolves away to a distorted, fading
-sound, the shackle swings open, and light pours out of the keyhole until it covers everything.
-Then the light slowly ebbs and the website is there, underneath, settling into view from a slight
-push-in. A visitor arriving after launch never sees the gate. Because an expired window reads as
+sound, the lock flares, and light pours out of the keyhole until it covers everything. Then the
+light slowly ebbs and the website is there, underneath, settling into view from a slight push-in. A visitor arriving after launch never sees the gate. Because an expired window reads as
 *open* — it never restarts — nobody can be locked out twice.
 
 **The score** (`src/lib/score.ts`) is synthesized live with Web Audio — there are no audio files,
@@ -276,8 +277,8 @@ directly against the real modules with a stubbed network:
 - **Score check** — the score is a complete no-op without Web Audio (SSR, blocked autoplay), the
   distortion curve is bounded, monotonic and centred, harder drive saturates harder, and the
   percussion of an earlier draft is asserted gone.
-- The gate render check also asserts the seal itself: the engraved lock, its crown, the rosette
-  around the keyhole, and the closed shackle.
+- The gate render check also asserts the seal itself: the painted lock, its screen blend, and its
+  empty alt text.
 - **Launch clock test (42 checks)** — a fake `requestAnimationFrame`, a fake DOM and a fake wall
   clock drive the shared clock directly: every subscriber reads one window (same object identity),
   the fast subscriber redraws about 30×/second and the seconds subscriber exactly once, no frame
