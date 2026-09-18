@@ -219,6 +219,13 @@ body {
   }
 }
 
+/* Cheap, big win: sections below the fold skip layout and paint until they
+   approach the viewport. `auto` sizing keeps anchor jumps honest. */
+main > section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100svh;
+}
+
 /* The reverse override: still everything even on a system that allows motion. */
 html.force-still *,
 html.force-still *::before,

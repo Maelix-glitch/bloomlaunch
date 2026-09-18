@@ -20,7 +20,7 @@
  * default until the real date is known — a placeholder date would silently
  * expire and leave the site sitting in its "live" state.
  */
-export const LAUNCH_AT: string | null = null;
+export const LAUNCH_AT: string | null = "2026-09-20T00:00:00+05:30";
 
 /** Length of the launch window. */
 export const WINDOW_MS = 24 * 60 * 60 * 1000;
