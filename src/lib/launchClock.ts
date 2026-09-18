@@ -1,4 +1,5 @@
 import {
+  WINDOW_MS,
   readAnchor,
   resolveWindow,
   splitRemaining,
@@ -65,10 +66,32 @@ function read(now: number, w: Window): LaunchClockState {
   };
 }
 
+/**
+ * Studio overrides, read from the address so the gate can be rehearsed:
+ * `?unlocked` opens the site immediately, `?lock-for=N` locks it for N more
+ * seconds. They only bend the anchor the window resolves from — the rolling
+ * anchor a real visitor accumulates is never touched, so the override does
+ * not follow them to their next visit.
+ */
+function overrideAnchor(now: number): number | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("unlocked")) return now - WINDOW_MS; // window already closed
+  const lockFor = params.get("lock-for");
+  if (lockFor !== null) {
+    const seconds = Number.parseInt(lockFor, 10);
+    if (Number.isFinite(seconds) && seconds > 0) {
+      const capped = Math.min(seconds * 1000, WINDOW_MS);
+      return now - (WINDOW_MS - capped); // window closes in N seconds
+    }
+  }
+  return null;
+}
+
 /** Resolve the window and compute one reading. */
 export function resolveOnce(): LaunchClockState {
   const now = nowMs();
-  const anchor = readAnchor();
+  const anchor = overrideAnchor(now) ?? readAnchor();
   const resolved = resolveWindow(now, anchor);
   // Persist the rollover anchor so a reload keeps the same window.
   if (resolved.rolling && anchor === null) writeAnchor(resolved.start);

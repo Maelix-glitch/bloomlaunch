@@ -16,14 +16,14 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  * Sized against the narrowest phone: six digits plus two separators and the
  * fast wheel have to fit inside 360px minus page padding.
  */
-const DIGIT_SCALE = "text-[3.1rem] sm:text-[5.4rem] lg:text-[8.4rem] xl:text-[10.5rem]";
+export const DIGIT_SCALE = "text-[3.1rem] sm:text-[5.4rem] lg:text-[8.4rem] xl:text-[10.5rem]";
 
 /**
  * Before the window opens the row can carry up to eight digits (days, hours,
  * minutes, seconds), so it steps down a size to stay on one line — measured
  * against the same 360px floor as the odometer.
  */
-const DAYS_SCALE = "text-[2.1rem] sm:text-[3.3rem] lg:text-[4.6rem] xl:text-[5.6rem]";
+export const DAYS_SCALE = "text-[2.1rem] sm:text-[3.3rem] lg:text-[4.6rem] xl:text-[5.6rem]";
 
 /** Splits a 0 → 1 progress value into whole units, for the elapsed strip. */
 function elapsedUnits(progress: number) {
@@ -335,25 +335,33 @@ export function LaunchCountdown() {
 }
 
 /** One unit of the countdown: digits on the odometer, label underneath. */
-function Unit({
+export function Unit({
   digits,
   label,
   imminent,
   reduced,
   scale = DIGIT_SCALE,
+  gilded = false,
 }: {
   digits: [number, number];
   label: string;
   imminent: boolean;
   reduced: boolean;
   scale?: string;
+  /** Gold-plate the numerals — reserved for the gate. */
+  gilded?: boolean;
 }) {
+  const color = gilded
+    ? "text-[#eed9a4]"
+    : "text-white";
+  const glow = gilded ? { textShadow: "0 0 28px rgba(232,177,88,0.38), 0 0 90px rgba(232,177,88,0.16)" } : undefined;
   return (
     <div className="flex flex-col items-center">
       <DigitPair
         digits={digits}
         duration={reduced ? 0 : 0.55}
-        className={`font-display leading-none tabular-nums text-white ${scale}`}
+        className={`font-display leading-none tabular-nums ${color} ${scale}`}
+        style={glow}
       />
       <span
         className="mt-3 text-[0.5rem] uppercase tracking-[0.26em] transition-colors duration-700 sm:mt-4 sm:text-[0.62rem]"
@@ -365,7 +373,7 @@ function Unit({
   );
 }
 
-function Separator({ reduced, scale = DIGIT_SCALE }: { reduced: boolean; scale?: string }) {
+export function Separator({ reduced, scale = DIGIT_SCALE }: { reduced: boolean; scale?: string }) {
   return (
     <span
       aria-hidden="true"

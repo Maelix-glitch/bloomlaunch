@@ -18,11 +18,21 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  * gets its own fixed-width box, which kills the width jitter that proportional
  * numerals would otherwise cause as the value changes.
  */
-export function Digit({ value, className = "", duration = 0.55 }: { value: number; className?: string; duration?: number }) {
+export function Digit({
+  value,
+  className = "",
+  duration = 0.55,
+  style,
+}: {
+  value: number;
+  className?: string;
+  duration?: number;
+  style?: React.CSSProperties;
+}) {
   return (
     <span
       className={`relative inline-block overflow-hidden ${className}`}
-      style={{ height: CELL_HEIGHT, width: "0.62em" }}
+      style={{ height: CELL_HEIGHT, width: "0.62em", ...style }}
       aria-hidden="true"
     >
       <motion.span
@@ -78,15 +88,17 @@ export function DigitPair({
   digits,
   className = "",
   duration,
+  style,
 }: {
   digits: [number, number];
   className?: string;
   duration?: number;
+  style?: React.CSSProperties;
 }) {
   return (
     <span className={`inline-flex ${className}`}>
-      <Digit value={digits[0]} duration={duration} />
-      <Digit value={digits[1]} duration={duration} />
+      <Digit value={digits[0]} duration={duration} style={style} />
+      <Digit value={digits[1]} duration={duration} style={style} />
     </span>
   );
 }

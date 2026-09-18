@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { CommandPalette } from "./components/CommandPalette";
+import { Gate } from "./components/Gate";
+import { useGate } from "./hooks/useGate";
 import { Cursor } from "./components/Cursor";
 import { ScrollProgress } from "./components/ScrollProgress";
 import { Preloader } from "./components/Preloader";
@@ -25,17 +27,26 @@ import { Footer } from "./sections/Footer";
 
 export default function App() {
   const [entered, setEntered] = useState(false);
+  const gate = useGate();
+
+  // The site stands behind the gate until the 24-hour window closes. It is
+  // mounted underneath the whole time — so the hero's frames are warm by the
+  // moment the doors part — but sealed: hidden, inert, and unscrollable.
+  const sealed = gate.locked;
+  const revealed = entered && !sealed;
 
   return (
     <div id="top" className="relative bg-[#050506]">
       <Cursor />
       <ScrollProgress />
-      <CommandPalette />
+      {!sealed && <CommandPalette />}
       <Preloader onDone={() => setEntered(true)} />
+      <Gate />
 
       <div
-        style={{ opacity: entered ? 1 : 0, transition: "opacity 0.9s cubic-bezier(0.16,1,0.3,1)" }}
-        aria-hidden={!entered}
+        style={{ opacity: revealed ? 1 : 0, transition: "opacity 0.9s cubic-bezier(0.16,1,0.3,1)" }}
+        aria-hidden={!revealed}
+        inert={sealed}
       >
         <Nav />
         <NavCountdown />

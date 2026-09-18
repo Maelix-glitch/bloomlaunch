@@ -71,11 +71,15 @@ export function resolveWindow(
     };
   }
 
-  if (storedAnchor !== null && Number.isFinite(storedAnchor) && now < storedAnchor + WINDOW_MS) {
-    return { start: storedAnchor, end: storedAnchor + WINDOW_MS, live: false, rolling: true };
+  if (storedAnchor !== null && Number.isFinite(storedAnchor)) {
+    // The anchor is the visitor's own window. While it runs they are sealed
+    // behind the gate; once it closes the site is theirs — it never restarts,
+    // or the countdown would lock them out forever.
+    const end = storedAnchor + WINDOW_MS;
+    return { start: storedAnchor, end, live: now >= end, rolling: true };
   }
 
-  // Unconfigured, expired, or a stale anchor: start a fresh window now.
+  // First visit, nothing configured: the window starts now.
   return { start: now, end: now + WINDOW_MS, live: false, rolling: true };
 }
 

@@ -160,6 +160,24 @@ Bloom opens, and every page carries it.
   in someone's calendar. The local and UTC readings are both printed, and the window's opening
   moment is shown alongside a progress strip.
 
+## The royal gate
+
+The whole site stands behind the countdown. Until the 24-hour window closes, a visitor sees only
+the gate — a full-screen ceremony: gilded odometer digits inside a framed court, a slow-turning
+golden aura, a field that pulses on every real second, and a staged entrance. The nav, the nine
+surfaces, the palette — everything — stays mounted underneath but sealed: hidden, `inert`, and
+unscrollable, so the hero's frames are warm the moment the doors part.
+
+The gate polices itself from the same one clock as every counter: the instant the window closes it
+runs its ceremony (gold flash, doors parting) and hands the site over. A visitor arriving after
+launch never sees it. Because an expired window reads as *open* — it never restarts — nobody can
+be locked out twice.
+
+Rehearse it from the address bar:
+
+- `?lock-for=90` — seal the site for 90 more seconds, then watch the ceremony unlock it.
+- `?unlocked` — stand the gate open (studio access).
+
 Set the real date in one place — `LAUNCH_AT` in `src/lib/countdown.ts`, an ISO string **with an
 explicit offset** (for example `2026-10-01T20:00:00+05:30`), so it resolves identically in every
 visitor's timezone. Until then it is unset (`null`) and the site counts a rolling 24-hour window
@@ -242,7 +260,10 @@ directly against the real modules with a stubbed network:
   fades peak mid-arc, the pointer pulls points toward it without ever overshooting, influence
   decays monotonically, hover targeting picks the nearest node and returns -1 outside the radius,
   and `withAlpha` parses, expands and clamps.
-- **Launch clock test (29 checks)** — a fake `requestAnimationFrame`, a fake DOM and a fake wall
+- **Gate render check** — the sealed stage: viewport coverage, the six gilded digit columns plus
+  the continuous wheel, the four court corners, the turning aura, the timer landmark, the
+  screen-reader reading, both time zones, and no leaked `undefined`/`NaN`.
+- **Launch clock test (42 checks)** — a fake `requestAnimationFrame`, a fake DOM and a fake wall
   clock drive the shared clock directly: every subscriber reads one window (same object identity),
   the fast subscriber redraws about 30×/second and the seconds subscriber exactly once, no frame
   arrives inside the 33 ms budget, five seconds of ticking never re-resolves the window, a hidden
@@ -258,7 +279,8 @@ directly against the real modules with a stubbed network:
   balanced `BEGIN`/`END` pairs, 75-octet folding with space continuations, escaping, and the
   −15-minute alarm. It also pins the phase model: the odometer only exists inside the window, days
   are split out before it, an unset launch date always yields a running 24-hour window, and the
-  pre-window copy counts in days.
+  pre-window copy counts in days, and an expired rolling window opens the site instead of
+  restarting it — the gate's guarantee that a visitor is sealed for one day, then free.
 - **Search test (32 checks)** — prefix beats mid-string, subsequence order is respected, highlights
   are correct and ascending, consecutive runs beat scattered hits, word starts beat mid-word, and
   twelve realistic palette queries (`dsh`, `sleep`, `gold`, `45`, `theme`, `conn`, …) all resolve
