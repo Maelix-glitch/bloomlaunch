@@ -21,6 +21,11 @@ let master: GainNode | null = null;
 let enabled = false;
 let riserNodes: { stop: (t?: number) => void; gain: GainNode }[] = [];
 
+/** The visitor's own beat drop, committed at public/audio/beat-drop.mp3. */
+const DROP_URL = "/audio/beat-drop.mp3";
+let dropBuffer: AudioBuffer | null = null;
+let dropLoading: Promise<void> | null = null;
+
 function supportsAudio(): boolean {
   return typeof window !== "undefined" && typeof (window as unknown as Record<string, unknown>).AudioContext !== "undefined";
 }
@@ -91,7 +96,39 @@ export const score = {
     } catch {
       enabled = false;
     }
+    if (enabled) this.loadDrop();
     return enabled;
+  },
+
+  /** Decode the drop ahead of zero so it fires with no fetch latency. */
+  loadDrop(): void {
+    const c = ensure();
+    if (c === null || dropBuffer !== null || dropLoading !== null) return;
+    dropLoading = (async () => {
+      try {
+        const res = await fetch(DROP_URL);
+        if (!res.ok) return;
+        dropBuffer = await c.decodeAudioData(await res.arrayBuffer());
+      } catch {
+        dropBuffer = null;
+      } finally {
+        dropLoading = null;
+      }
+    })();
+  },
+
+  /** The visitor's drop, exactly at zero. Silent if it never decoded. */
+  drop(): void {
+    if (!enabled) return;
+    const c = ensure();
+    const m = out();
+    if (c === null || m === null || c.state !== "running" || dropBuffer === null) return;
+    const src = c.createBufferSource();
+    src.buffer = dropBuffer;
+    const g = c.createGain();
+    g.gain.value = 1;
+    src.connect(g).connect(m);
+    src.start(c.currentTime + 0.03);
   },
 
   disable(): void {
@@ -249,64 +286,6 @@ export const score = {
   },
 
   /**
-   * Zero's whoosh: cinematic wind, bass-boosted. The band-pass sweep is the
-   * air rushing past; a driven low layer and a falling sub are the weight
-   * underneath — the light has mass when it leaves the keyhole.
-   */
-  whoosh(): void {
-    if (!enabled) return;
-    const c = ensure();
-    const m = out();
-    if (c === null || m === null || c.state !== "running") return;
-    const t0 = c.currentTime;
-
-    // The wind: noise swept up fast, then falling away.
-    const nz = c.createBufferSource();
-    nz.buffer = noiseBuffer(c, 2.4);
-    nz.playbackRate.setValueAtTime(0.75, t0);
-    nz.playbackRate.linearRampToValueAtTime(1.15, t0 + 0.5);
-    const bp = c.createBiquadFilter();
-    bp.type = "bandpass";
-    bp.Q.value = 0.75;
-    bp.frequency.setValueAtTime(70, t0);
-    bp.frequency.exponentialRampToValueAtTime(2600, t0 + 0.45);
-    bp.frequency.exponentialRampToValueAtTime(110, t0 + 2.0);
-    const ng = c.createGain();
-    ng.gain.setValueAtTime(0.0001, t0);
-    ng.gain.linearRampToValueAtTime(0.5, t0 + 0.12);
-    ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.1);
-    nz.connect(bp).connect(ng).connect(m);
-    nz.start(t0);
-
-    // The bass-boosted body: the same wind, driven low and heavy.
-    const nz2 = c.createBufferSource();
-    nz2.buffer = noiseBuffer(c, 1.6);
-    const lp = c.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.setValueAtTime(420, t0);
-    lp.frequency.exponentialRampToValueAtTime(60, t0 + 1.4);
-    const bodyG = c.createGain();
-    bodyG.gain.setValueAtTime(0.0001, t0);
-    bodyG.gain.linearRampToValueAtTime(0.6, t0 + 0.1);
-    bodyG.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.5);
-    nz2.connect(lp).connect(shaper(c, 8)).connect(bodyG).connect(m);
-    nz2.start(t0);
-
-    // The sub that falls with the gust.
-    const sub = c.createOscillator();
-    sub.type = "sine";
-    sub.frequency.setValueAtTime(72, t0);
-    sub.frequency.exponentialRampToValueAtTime(26, t0 + 1.3);
-    const sg = c.createGain();
-    sg.gain.setValueAtTime(0.0001, t0);
-    sg.gain.linearRampToValueAtTime(0.8, t0 + 0.09);
-    sg.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.6);
-    sub.connect(sg).connect(m);
-    sub.start(t0);
-    sub.stop(t0 + 1.8);
-  },
-
-  /**
    * The reveal: a deep warm mass rising under the light — sub floor, low
    * fifth, the chord above — with a high shimmer like dust in the light.
    * This is the goosebump: enormous below, glittering above.
@@ -381,4 +360,6 @@ export function __resetScore(): void {
   master = null;
   enabled = false;
   riserNodes = [];
+  dropBuffer = null;
+  dropLoading = null;
 }

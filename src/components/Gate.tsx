@@ -82,9 +82,9 @@ export function Gate() {
   useEffect(() => {
     if (!live || stage !== "locked") return;
     score.unseal();
-    score.whoosh();
+    score.drop();
     setStage("unsealing");
-    const blindAt = reduced ? 450 : 1950;
+    const blindAt = reduced ? 450 : 1250;
     const revealAt = reduced ? 800 : 2700;
     const goneAt = reduced ? 1800 : 6400;
     const t1 = window.setTimeout(() => {
@@ -475,28 +475,51 @@ export function Gate() {
         </button>
       )}
 
-      {/* The light, born in the keyhole */}
+      {/* The light, born in the keyhole.
+          First: a vertical streak at the speed of light.
+          Then: the flashbang — white, bright, covering every corner. */}
       {unsealing && (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
-          <div className="relative" style={{ width: "min(88vmin, 760px)" }}>
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-40">
+          {/* The vertical streak, through the keyhole */}
+          {!reduced && (
             <motion.div
-              className="absolute left-1/2 top-[64%] rounded-full"
+              className="absolute inset-y-0 left-1/2"
               style={{
-                width: "70vmax",
-                height: "70vmax",
-                marginLeft: "calc(70vmax / -2)",
-                marginTop: "calc(70vmax / -2)",
+                width: "6px",
+                marginLeft: "-3px",
+                transformOrigin: "50% 64%",
                 background:
-                  "radial-gradient(circle, #fffdf5 0%, rgba(243,230,201,0.98) 24%, rgba(232,177,88,0.62) 48%, rgba(232,177,88,0) 70%)",
+                  "linear-gradient(to bottom, transparent 0%, #ffffff 16%, #ffffff 84%, transparent 100%)",
+                boxShadow:
+                  "0 0 24px 6px rgba(255,255,255,0.85), 0 0 120px 42px rgba(243,230,201,0.45)",
               }}
-              initial={reduced ? { scale: 4, opacity: 0 } : { scale: 0.04, opacity: 0 }}
-              animate={{ scale: stage === "unsealing" ? 1.7 : 4.4, opacity: stage === "unsealing" ? [0, 0.9] : 1 }}
-              transition={
-                stage === "unsealing"
-                  ? { duration: reduced ? 0.35 : 1.5, delay: reduced ? 0 : 0.45, ease: [0.3, 0.7, 0.3, 1] }
-                  : { duration: 0.5, ease: "easeOut" }
-              }
+              initial={{ scaleY: 0, opacity: 0 }}
+              animate={{ scaleY: 1, opacity: 1 }}
+              transition={{ duration: 0.22, ease: [0.15, 0.9, 0.2, 1], delay: 0.04 }}
             />
+          )}
+          {/* The flashbang, out of the keyhole to every corner */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative" style={{ width: "min(88vmin, 760px)" }}>
+              <motion.div
+                className="absolute left-1/2 top-[64%] rounded-full"
+                style={{
+                  width: "78vmax",
+                  height: "78vmax",
+                  marginLeft: "calc(78vmax / -2)",
+                  marginTop: "calc(78vmax / -2)",
+                  background:
+                    "radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.98) 30%, rgba(243,230,201,0.92) 54%, rgba(232,177,88,0) 74%)",
+                }}
+                initial={reduced ? { scale: 4.4, opacity: 0 } : { scale: 0.03, opacity: 0 }}
+                animate={{ scale: stage === "unsealing" ? 1.9 : 4.6, opacity: stage === "unsealing" ? [0, 0.95] : 1 }}
+                transition={
+                  stage === "unsealing"
+                    ? { duration: reduced ? 0.35 : 0.75, delay: reduced ? 0 : 0.3, ease: [0.25, 0.8, 0.3, 1] }
+                    : { duration: 0.45, ease: "easeOut" }
+                }
+              />
+            </div>
           </div>
         </div>
       )}
@@ -520,7 +543,7 @@ export function Gate() {
       {stage !== "unsealing" && stage !== "locked" && (
         <motion.div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-50 bg-[#f8f1e0]"
+          className="pointer-events-none absolute inset-0 z-50 bg-white"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.96 }}
           transition={{ duration: 0.45, ease: "easeOut" }}

@@ -180,8 +180,9 @@ light slowly ebbs and the website is there, underneath, settling into view from 
 **The score** (`src/lib/score.ts`) is synthesized live with Web Audio — there are no audio files,
 and no beat: only slow pressure. The last ten carry a low drone and a climbing breath of noise;
 zero brings the unsealing — a driven chord that distorts and melts into silence as the volume
-fades, with a rumble sinking underneath; and a warm major-chord swell carries the light and the
-site's arrival. Browsers gate audio behind a visitor gesture, so the gate offers an **Enable
+fades — together with the site's own beat drop (`public/audio/beat-drop.mp3`, committed to the
+repo and decoded ahead of zero so it fires with no latency); and a warm major-chord swell carries
+the light and the site's arrival. Browsers gate audio behind a visitor gesture, so the gate offers an **Enable
 sound** switch — and any touch on the gate wakes the score.
 
 Rehearse it from the address bar:
