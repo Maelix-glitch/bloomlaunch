@@ -84,9 +84,11 @@ export function Gate() {
     score.unseal();
     score.drop();
     setStage("unsealing");
-    const blindAt = reduced ? 450 : 1250;
-    const revealAt = reduced ? 800 : 2700;
-    const goneAt = reduced ? 1800 : 6400;
+    // The light holds its breath for a second after zero, then runs
+    // vertically, then the flashbang.
+    const blindAt = reduced ? 450 : 2100;
+    const revealAt = reduced ? 800 : 3400;
+    const goneAt = reduced ? 1800 : 7200;
     const t1 = window.setTimeout(() => {
       setStage("blinded");
       score.swell();
@@ -468,6 +470,7 @@ export function Gate() {
         <button
           type="button"
           onClick={toggleSound}
+          onPointerDown={(e) => e.stopPropagation()}
           aria-pressed={soundOn}
           className="absolute bottom-6 right-6 z-50 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[0.6rem] uppercase tracking-[0.3em] text-white/60 backdrop-blur-sm transition-colors duration-300 hover:border-[#e8b158]/60 hover:text-[#f3e6c9] sm:bottom-9 sm:right-9"
         >
@@ -495,7 +498,7 @@ export function Gate() {
               }}
               initial={{ scaleY: 0, opacity: 0 }}
               animate={{ scaleY: 1, opacity: 1 }}
-              transition={{ duration: 0.22, ease: [0.15, 0.9, 0.2, 1], delay: 0.04 }}
+              transition={{ duration: 0.22, ease: [0.15, 0.9, 0.2, 1], delay: 1.0 }}
             />
           )}
           {/* The flashbang, out of the keyhole to every corner */}
@@ -515,7 +518,7 @@ export function Gate() {
                 animate={{ scale: stage === "unsealing" ? 1.9 : 4.6, opacity: stage === "unsealing" ? [0, 0.95] : 1 }}
                 transition={
                   stage === "unsealing"
-                    ? { duration: reduced ? 0.35 : 0.75, delay: reduced ? 0 : 0.3, ease: [0.25, 0.8, 0.3, 1] }
+                    ? { duration: reduced ? 0.35 : 0.75, delay: reduced ? 0 : 1.28, ease: [0.25, 0.8, 0.3, 1] }
                     : { duration: 0.45, ease: "easeOut" }
                 }
               />
