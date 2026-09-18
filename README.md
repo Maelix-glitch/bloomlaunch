@@ -162,24 +162,26 @@ Bloom opens, and every page carries it.
 
 ## The royal gate
 
-The whole site stands behind the countdown. Until the 24-hour window closes, a visitor sees only
-the gate — a full-screen ceremony: gilded odometer digits inside a framed court, a slow-turning
-golden aura, a field that pulses on every real second, and a staged entrance. The nav, the nine
-surfaces, the palette — everything — stays mounted underneath but sealed: hidden, `inert`, and
-unscrollable, so the hero's frames are warm the moment of the reveal.
+The whole site stands behind the countdown, and the countdown belongs to **the royal seal**: a
+huge, faded lock engraved in gold like something on a vault door — crowned body, filigree corners,
+a rosette around the keyhole (`src/components/RoyalLock.tsx`). The gilded odometer keeps time over
+it. The nav, the nine surfaces, the palette — everything — stays mounted underneath but sealed:
+hidden, `inert`, and unscrollable, so the hero's frames are warm at the moment of the reveal.
 
 The last ten seconds are played like a film: letterbox bars close in, film grain and flicker come
-up, the aura races, and one giant numeral counts 10 → 1 alone on the screen, each second knocking
-with a flash and a shake. At zero: a gold flash, then a long, slow fade as the website is revealed
-underneath, settling from a slight push-in. A visitor arriving after launch never sees the gate.
-Because an expired window reads as *open* — it never restarts — nobody can be locked out twice.
+up, the aura races, one giant numeral counts 10 → 1 alone on the screen, and the lock's keyhole
+begins to glow. At zero the gate **unseals**: the countdown dissolves away to a distorted, fading
+sound, the shackle swings open, and light pours out of the keyhole until it covers everything.
+Then the light slowly ebbs and the website is there, underneath, settling into view from a slight
+push-in. A visitor arriving after launch never sees the gate. Because an expired window reads as
+*open* — it never restarts — nobody can be locked out twice.
 
-**The score** (`src/lib/score.ts`) is synthesized live with Web Audio — there are no audio files:
-one deep distorted knock per second for the last ten, the classic trailer riser (climbing noise,
-pitch and drive with glitch stutters tightening toward zero), a braaam impact at zero (a driven
-low-fifth chord, sub drop, crack, high glimmer), and a warm chord swell under the reveal. Browsers
-gate audio behind a visitor gesture, so the gate offers an **Enable sound** switch — and any touch
-on the gate wakes the score.
+**The score** (`src/lib/score.ts`) is synthesized live with Web Audio — there are no audio files,
+and no beat: only slow pressure. The last ten carry a low drone and a climbing breath of noise;
+zero brings the unsealing — a driven chord that distorts and melts into silence as the volume
+fades, with a rumble sinking underneath; and a warm major-chord swell carries the light and the
+site's arrival. Browsers gate audio behind a visitor gesture, so the gate offers an **Enable
+sound** switch — and any touch on the gate wakes the score.
 
 Rehearse it from the address bar:
 
@@ -272,7 +274,10 @@ directly against the real modules with a stubbed network:
   the continuous wheel, the four court corners, the turning aura, the timer landmark, the
   screen-reader reading, both time zones, the sound switch, and no leaked `undefined`/`NaN`.
 - **Score check** — the score is a complete no-op without Web Audio (SSR, blocked autoplay), the
-  distortion curve is bounded, monotonic and centred, and harder drive saturates harder.
+  distortion curve is bounded, monotonic and centred, harder drive saturates harder, and the
+  percussion of an earlier draft is asserted gone.
+- The gate render check also asserts the seal itself: the engraved lock, its crown, the rosette
+  around the keyhole, and the closed shackle.
 - **Launch clock test (42 checks)** — a fake `requestAnimationFrame`, a fake DOM and a fake wall
   clock drive the shared clock directly: every subscriber reads one window (same object identity),
   the fast subscriber redraws about 30×/second and the seconds subscriber exactly once, no frame

@@ -3,6 +3,7 @@ import { motion, useReducedMotion as useFramerReducedMotion } from "framer-motio
 import { CountdownField } from "./CountdownField";
 import { RollWheel } from "./DigitRoller";
 import { BloomGlyph } from "./Logo";
+import { RoyalLock } from "./RoyalLock";
 import { useCountdown } from "../hooks/useCountdown";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { buildIcs, formatLocalMoment, formatUtcMoment, stageCopy, windowPhase } from "../lib/countdown";
@@ -17,13 +18,17 @@ const FINALE_MS = 10_000;
 /**
  * The royal gate — played like a film.
  *
- * Until the 24-hour window closes, the entire site stands behind this screen:
- * no nav, no sections, no palette — only the ceremony. A gilded odometer runs
- * inside a framed court while a field pulses on every real second. For the
- * final ten seconds the frame goes cinematic: letterbox bars close in, a giant
- * numeral counts the last seconds alone, the screen shakes with every knock,
- * and — if sound is on — a riser climbs into a distorted braaam at zero. Then
- * the gate fades away slowly and the website is revealed underneath.
+ * Until the 24-hour window closes, the entire site stands behind this
+ * screen, and the screen belongs to one object: a huge, faded lock, engraved
+ * in gold like something on a vault door. The gilded countdown keeps time
+ * over it. For the final ten seconds the frame goes cinematic — letterbox
+ * bars, grain, one giant numeral counting 10 → 1 — and the lock's keyhole
+ * begins to glow.
+ *
+ * At zero the gate unseals: the countdown dissolves away to a distorted,
+ * fading sound, the shackle swings open, and light pours out of the keyhole
+ * until it covers everything. Then the light slowly ebbs and the website is
+ * there, underneath, settling into view.
  *
  * The gate polices itself from the one clock the whole site reads, so it
  * opens at the exact instant the countdown does. A visitor arriving after
@@ -39,12 +44,10 @@ export function Gate() {
   const imminent = !live && remaining.total <= 60_000;
 
   // --- the finale ----------------------------------------------------------
-  // The film sequence runs during the last ten seconds of the window.
   const finale = phase === "window" && !live && remaining.total <= FINALE_MS;
   const bigNumber = Math.max(1, Math.ceil(remaining.total / 1000));
 
   // --- sound ---------------------------------------------------------------
-  // Browsers only allow audio after a gesture, so the score waits for one.
   const [soundOn, setSoundOn] = useState(false);
   const wakeSound = () => {
     void score.enable().then(() => setSoundOn(score.isEnabled()));
@@ -58,44 +61,39 @@ export function Gate() {
     }
   };
 
-  // The riser starts with the finale; one knock per second; the braaam and
-  // the swell land exactly on zero. Each fires once per crossing.
+  // The slow climb starts with the finale; there is no beat on this gate.
   const finaleStartedRef = useRef(false);
-  const lastKnockRef = useRef<number>(Infinity);
-  const impactedRef = useRef(false);
   useEffect(() => {
     if (finale && !finaleStartedRef.current) {
       finaleStartedRef.current = true;
-      // Usually a full ten-second climb; a caught-up tab joins late, and the
-      // riser compresses to whatever is actually left.
       score.startRiser(Math.max(1, Math.ceil(remaining.total / 1000)));
     }
   }, [finale, remaining.total]);
-  useEffect(() => {
-    if (!finale) return;
-    if (bigNumber < lastKnockRef.current && bigNumber >= 1 && bigNumber <= 10) {
-      lastKnockRef.current = bigNumber;
-      score.tick(bigNumber);
-    }
-  }, [finale, bigNumber]);
-  useEffect(() => {
-    if (!live || impactedRef.current) return;
-    impactedRef.current = true;
-    score.impact();
-    score.swell();
-  }, [live]);
 
-  // --- the unlock ceremony -------------------------------------------------
-  // locked → opening (the flash) → revealing (the long fade) → done.
-  const [stage, setStage] = useState<"locked" | "opening" | "revealing" | "done">(() => (live ? "done" : "locked"));
+  // --- the unsealing -------------------------------------------------------
+  // locked → unsealing (the countdown dissolves, the shackle opens, the light
+  // is born in the keyhole) → blinded (light covers everything, the warm
+  // chord swells) → revealing (the light ebbs, the site appears) → done.
+  const [stage, setStage] = useState<"locked" | "unsealing" | "blinded" | "revealing" | "done">(() =>
+    live ? "done" : "locked"
+  );
   useEffect(() => {
     if (!live || stage !== "locked") return;
-    setStage("opening");
-    const open = window.setTimeout(() => setStage("revealing"), reduced ? 120 : 750);
-    const gone = window.setTimeout(() => setStage("done"), reduced ? 700 : 4000);
+    score.unseal();
+    setStage("unsealing");
+    const blindAt = reduced ? 450 : 1950;
+    const revealAt = reduced ? 800 : 2700;
+    const goneAt = reduced ? 1800 : 6400;
+    const t1 = window.setTimeout(() => {
+      setStage("blinded");
+      score.swell();
+    }, blindAt);
+    const t2 = window.setTimeout(() => setStage("revealing"), revealAt);
+    const t3 = window.setTimeout(() => setStage("done"), goneAt);
     return () => {
-      window.clearTimeout(open);
-      window.clearTimeout(gone);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
     };
   }, [live, stage, reduced]);
 
@@ -143,8 +141,10 @@ export function Gate() {
   };
 
   const gilded: CSSProperties = { color: "#eed9a4", textShadow: "0 0 28px rgba(232,177,88,0.35)" };
+  const unsealing = stage !== "locked";
   const revealing = stage === "revealing";
-  const leaving = stage === "opening" || revealing;
+  const lockGlow = unsealing ? 1 : finale ? 0.5 : 0.14;
+  const lockOpacity = unsealing ? 0.62 : finale ? 0.34 : 0.17;
 
   if (stage === "done") return null;
 
@@ -154,14 +154,14 @@ export function Gate() {
       className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#050506]"
       onPointerDown={wakeSound}
       animate={{ opacity: revealing ? 0 : 1 }}
-      transition={{ duration: reduced ? 0.5 : 3.4, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: reduced ? 0.8 : 3.7, ease: [0.4, 0, 0.2, 1] }}
     >
       {/* The field: pulse rings on every real second, drifting light */}
       <div className="pointer-events-none absolute inset-0">
         <CountdownField live={live} className="h-full w-full" />
       </div>
 
-      {/* The court: a slow-turning golden aura, racing during the finale */}
+      {/* A slow-turning golden aura, racing during the finale */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-1/2 h-[140vmax] w-[140vmax] -translate-x-1/2 -translate-y-1/2"
@@ -170,7 +170,7 @@ export function Gate() {
             "conic-gradient(from 90deg, transparent 0deg, rgba(232,177,88,0.055) 24deg, transparent 60deg, rgba(141,123,242,0.04) 130deg, transparent 170deg, rgba(232,177,88,0.055) 240deg, transparent 285deg, rgba(127,184,143,0.035) 330deg, transparent 360deg)",
           animation: reduced
             ? undefined
-            : finale
+            : finale || unsealing
               ? "gate-aura-fast 5s linear infinite"
               : "gate-aura 48s linear infinite",
           opacity: finale ? 1 : 0.7,
@@ -180,8 +180,19 @@ export function Gate() {
       />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_50%,transparent_30%,rgba(5,5,6,0.92)_100%)]" />
 
+      {/* The royal seal: huge, faded, engraved in gold */}
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[54%]"
+        animate={{ opacity: lockOpacity, scale: unsealing ? 1.06 : finale ? 1.02 : 1 }}
+        transition={{ duration: 1.4, ease: EASE }}
+        style={{ width: "min(66vmin, 560px)" }}
+      >
+        <RoyalLock open={unsealing} glow={lockGlow} className="w-full" />
+      </motion.div>
+
       {/* Film grain + flicker during the finale */}
-      {finale && !reduced && (
+      {finale && !reduced && !unsealing && (
         <>
           <div
             aria-hidden="true"
@@ -204,8 +215,8 @@ export function Gate() {
       <motion.div
         aria-hidden="true"
         initial={framerReduced ? undefined : { opacity: 0 }}
-        animate={framerReduced ? undefined : { opacity: 1 }}
-        transition={{ duration: 1.4, ease: EASE }}
+        animate={framerReduced ? undefined : { opacity: unsealing ? 0 : 1 }}
+        transition={{ duration: unsealing ? 0.7 : 1.4, ease: EASE }}
         className="pointer-events-none absolute inset-3 border border-[#e8b158]/15 sm:inset-5"
       >
         <div className="absolute inset-2 border border-white/[0.045] sm:inset-3" />
@@ -229,14 +240,14 @@ export function Gate() {
             aria-hidden="true"
             className="absolute inset-x-0 top-0 z-40 bg-black"
             initial={{ height: "0vh" }}
-            animate={{ height: leaving ? "0vh" : "9vh" }}
+            animate={{ height: unsealing ? "0vh" : "9vh" }}
             transition={{ duration: 0.9, ease: EASE }}
           />
           <motion.div
             aria-hidden="true"
             className="absolute inset-x-0 bottom-0 z-40 bg-black"
             initial={{ height: "0vh" }}
-            animate={{ height: leaving ? "0vh" : "9vh" }}
+            animate={{ height: unsealing ? "0vh" : "9vh" }}
             transition={{ duration: 0.9, ease: EASE }}
           />
         </>
@@ -245,8 +256,8 @@ export function Gate() {
       {/* The ceremony itself */}
       <motion.div
         className="relative flex max-h-full w-full max-w-4xl flex-col items-center overflow-y-auto px-8 py-10 text-center sm:px-12"
-        animate={{ opacity: finale ? 0.12 : leaving ? 0 : 1, scale: finale ? 0.92 : 1 }}
-        transition={{ duration: 0.9, ease: EASE }}
+        animate={{ opacity: unsealing ? 0 : finale ? 0.14 : 1, scale: finale ? 0.92 : 1 }}
+        transition={{ duration: unsealing ? 0.75 : 0.9, ease: EASE }}
       >
         {/* The mark, breathing */}
         <motion.div
@@ -336,7 +347,6 @@ export function Gate() {
               </>
             )}
           </div>
-          {/* Screen readers get the plain reading */}
           <span className="sr-only">
             {live
               ? "The countdown is over. Bloom is live."
@@ -403,19 +413,17 @@ export function Gate() {
       </motion.div>
 
       {/* The final ten: one giant numeral, alone on the screen */}
-      {finale && !leaving && (
+      {finale && !unsealing && (
         <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center">
           <motion.div
             key={bigNumber}
-            initial={reduced ? { opacity: 1 } : { opacity: 0, scale: 1.45, filter: "blur(14px)" }}
+            initial={reduced ? { opacity: 1 } : { opacity: 0, scale: 1.4, filter: "blur(14px)" }}
             animate={reduced ? { opacity: 1 } : { opacity: 1, scale: 1, filter: "blur(0px)" }}
-            transition={{ duration: 0.5, ease: [0.2, 0.9, 0.2, 1] }}
+            transition={{ duration: 0.55, ease: [0.2, 0.9, 0.2, 1] }}
             className="flex flex-col items-center"
           >
-            <motion.span
+            <span
               aria-hidden="true"
-              animate={reduced ? undefined : { x: [0, -8, 7, -5, 3, 0], y: [0, 5, -6, 3, -2, 0] }}
-              transition={{ duration: 0.42, ease: "easeOut" }}
               className="font-display leading-none text-[#eed9a4]"
               style={{
                 fontSize: "min(52vmin, 30rem)",
@@ -424,44 +432,56 @@ export function Gate() {
               }}
             >
               {bigNumber}
-            </motion.span>
+            </span>
             <span className="mt-2 text-[0.62rem] uppercase tracking-[0.6em] text-[#e8b158]/70 sm:text-[0.7rem]">
-              {bigNumber === 1 ? "Hold your breath" : "The gates open"}
+              {bigNumber === 1 ? "Hold your breath" : "The lock is about to break"}
             </span>
           </motion.div>
-
-          {/* The knock's flash */}
-          {!reduced && (
-            <motion.div
-              key={`flash-${bigNumber}`}
-              aria-hidden="true"
-              className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(243,230,201,0.55),transparent_60%)]"
-              initial={{ opacity: 0.8 }}
-              animate={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            />
-          )}
         </div>
       )}
 
       {/* Sound: browsers need a gesture; the switch and any touch offer one */}
-      <button
-        type="button"
-        onClick={toggleSound}
-        aria-pressed={soundOn}
-        className="absolute bottom-6 right-6 z-50 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[0.6rem] uppercase tracking-[0.3em] text-white/60 backdrop-blur-sm transition-colors duration-300 hover:border-[#e8b158]/60 hover:text-[#f3e6c9] sm:bottom-9 sm:right-9"
-      >
-        {soundOn ? "Sound on" : "Enable sound"}
-      </button>
+      {!unsealing && (
+        <button
+          type="button"
+          onClick={toggleSound}
+          aria-pressed={soundOn}
+          className="absolute bottom-6 right-6 z-50 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[0.6rem] uppercase tracking-[0.3em] text-white/60 backdrop-blur-sm transition-colors duration-300 hover:border-[#e8b158]/60 hover:text-[#f3e6c9] sm:bottom-9 sm:right-9"
+        >
+          {soundOn ? "Sound on" : "Enable sound"}
+        </button>
+      )}
 
-      {/* Zero: the flash, then the long royal fade */}
-      {leaving && !reduced && (
+      {/* The light, born in the keyhole */}
+      {unsealing && (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
+          <motion.div
+            className="rounded-full"
+            style={{
+              width: "70vmax",
+              height: "70vmax",
+              background:
+                "radial-gradient(circle, #fffdf5 0%, rgba(243,230,201,0.98) 24%, rgba(232,177,88,0.62) 48%, rgba(232,177,88,0) 70%)",
+            }}
+            initial={reduced ? { scale: 4, opacity: 0 } : { scale: 0.04, opacity: 0 }}
+            animate={{ scale: stage === "unsealing" ? 1.7 : 4.4, opacity: stage === "unsealing" ? [0, 0.9] : 1 }}
+            transition={
+              stage === "unsealing"
+                ? { duration: reduced ? 0.35 : 1.5, delay: reduced ? 0 : 0.45, ease: [0.3, 0.7, 0.3, 1] }
+                : { duration: 0.5, ease: "easeOut" }
+            }
+          />
+        </div>
+      )}
+
+      {/* Blinded: the light covers everything, then ebbs with the gate */}
+      {stage !== "unsealing" && stage !== "locked" && (
         <motion.div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-20 bg-[radial-gradient(circle_at_50%_50%,rgba(243,230,201,0.95)_0%,rgba(232,177,88,0.5)_38%,transparent_72%)]"
+          className="pointer-events-none absolute inset-0 z-50 bg-[#f8f1e0]"
           initial={{ opacity: 0 }}
-          animate={{ opacity: stage === "opening" ? [0, 1, 0.6] : 0 }}
-          transition={{ duration: stage === "opening" ? 0.75 : 0.8, times: [0, 0.35, 1], ease: "easeOut" }}
+          animate={{ opacity: 0.96 }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
         />
       )}
     </motion.section>
