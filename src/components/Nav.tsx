@@ -94,7 +94,7 @@ export function Nav() {
                 data-cursor="hover"
                 className="group relative inline-flex items-center overflow-hidden rounded-full bg-white px-4 py-2 text-[0.82rem] font-medium text-black"
               >
-                <span className="relative z-10">Enter Bloom</span>
+                <span className="relative z-10">Get whitelist</span>
                 <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-[#f3e6c9] to-white transition-transform duration-500 group-hover:translate-x-0" />
               </a>
             </Magnetic>
@@ -164,7 +164,7 @@ export function Nav() {
                 transition={{ duration: 0.5, delay: 0.45, ease: EASE }}
                 className="mt-3 rounded-full bg-white px-5 py-3.5 text-center text-[0.95rem] font-medium text-black"
               >
-                Enter Bloom
+                Get whitelist
               </motion.a>
             </nav>
           </motion.div>

@@ -8,6 +8,7 @@ import { Preloader } from "./components/Preloader";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
 import { NavCountdown } from "./components/NavCountdown";
+import { BriefGallery } from "./sections/BriefGallery";
 import { EcosystemOrbit } from "./components/EcosystemOrbit";
 import { LaunchCountdown } from "./sections/LaunchCountdown";
 import { StoryPath } from "./components/StoryPath";
@@ -68,6 +69,7 @@ export default function App() {
         <main>
           <Hero />
           <LaunchCountdown />
+          <BriefGallery />
           <EcosystemOrbit />
           <StoryPath />
           <MoodSection />

@@ -131,6 +131,20 @@ body {
   50% { transform: translateY(-10px); }
 }
 
+@keyframes brief-spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+@keyframes brief-mist {
+  from { transform: translate3d(-6%, -2%, 0) scale(1); }
+  to { transform: translate3d(6%, 3%, 0) scale(1.18); }
+}
+
+/* The brief carousel's orbit radius, responsive. */
+.brief-ring { --brief-z: clamp(170px, 30vmin, 270px); }
+.brief-card { backface-visibility: hidden; }
+
 @keyframes gate-aura {
   to { transform: rotate(360deg); }
 }

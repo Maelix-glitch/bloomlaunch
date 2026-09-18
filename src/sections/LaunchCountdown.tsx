@@ -297,7 +297,7 @@ export function LaunchCountdown() {
               data-cursor="hover"
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-white px-7 py-3.5 text-[0.88rem] font-medium text-black transition-shadow hover:shadow-[0_20px_60px_-14px_rgba(232,177,88,0.6)]"
             >
-              <span className="relative z-10">{live ? "Enter Bloom" : "Claim your place"}</span>
+              <span className="relative z-10">{live ? "Get whitelist" : "Claim your place"}</span>
               <span className="relative z-10 transition-transform duration-300 group-hover:translate-x-0.5">→</span>
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-[#f3e6c9] to-white transition-transform duration-500 group-hover:translate-x-0" />
             </a>

@@ -25,6 +25,7 @@ const COMMANDS: Command[] = [
   { id: "profile", title: "Profile", group: "Surfaces", href: "#profile", hint: "You, at the centre of your record", keywords: "identity achievements goals insights account" },
   { id: "launch", title: "Launch countdown", group: "Actions", href: "#launch", hint: "Live, to the hundredth", keywords: "launch countdown timer opens live date time calendar premiere" },
   { id: "tour", title: "Tour the ecosystem", group: "Actions", href: "#ecosystem", hint: "See how all nine connect", keywords: "map living orbit explore" },
+  { id: "brief", title: "The brief", group: "Actions", href: "#brief", hint: "What Bloom is, in one orbit", keywords: "about gallery overview intro mist bloom" },
   { id: "story", title: "How it works", group: "Actions", href: "#story", hint: "The eight-step arc", keywords: "steps understand track discover improve" },
   { id: "top", title: "Back to the top", group: "Actions", href: "#top", hint: "Replay the sequence", keywords: "home start scroll up beginning" },
 ];

@@ -160,6 +160,15 @@ Bloom opens, and every page carries it.
   in someone's calendar. The local and UTC readings are both printed, and the window's opening
   moment is shown alongside a progress strip.
 
+## The brief & the whitelist
+
+After the gate, `#brief` gives the app away in one orbit: six plates of information turning in a
+misty 3D carousel around the mark (a plain gallery wall under reduced motion). The closing CTA is
+the whitelist — "Be the first to test Bloom." Addresses POST as JSON to
+`VITE_WHITELIST_ENDPOINT` when it is set (Formspree, Web3Forms, a Supabase edge function — anything
+that accepts a JSON POST puts them in your database); without it they are kept in the visitor's
+own browser so the flow still works end to end.
+
 ## The royal gate
 
 The whole site stands behind the countdown, and the countdown belongs to **the royal seal**: a
@@ -179,10 +188,9 @@ light slowly ebbs and the website is there, underneath, settling into view from 
 
 **The score** (`src/lib/score.ts`) is synthesized live with Web Audio — there are no audio files,
 and no beat: only slow pressure. The last ten carry a low drone and a climbing breath of noise;
-zero brings the unsealing — a driven chord that distorts and melts into silence as the volume
-fades — together with the site's own beat drop (`public/audio/beat-drop.mp3`, committed to the
-repo and decoded ahead of zero so it fires with no latency); and a warm major-chord swell carries
-the light and the site's arrival. Browsers gate audio behind a visitor gesture, so the gate offers an **Enable
+zero belongs to the visitor's beat drop (`public/audio/beat-drop.mp3`, committed to the repo,
+decoded ahead of zero) played raw and alone — the site's own voices stay silent under it; and the
+reveal is carried by light alone. Browsers gate audio behind a visitor gesture, so the gate offers an **Enable
 sound** switch — and any touch on the gate wakes the score.
 
 Rehearse it from the address bar:

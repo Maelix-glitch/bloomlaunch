@@ -78,7 +78,9 @@ export function Gate() {
   );
   useEffect(() => {
     if (!live || stage !== "locked") return;
-    score.unseal();
+    // The visitor's drop, raw and alone — the site's own voices stay out of
+    // its way. The riser ends where the drop begins.
+    score.cancelRiser();
     score.drop();
     setStage("unsealing");
     // The light holds its breath for a second after zero, then runs
@@ -88,7 +90,6 @@ export function Gate() {
     const goneAt = reduced ? 1800 : 7200;
     const t1 = window.setTimeout(() => {
       setStage("blinded");
-      score.swell();
     }, blindAt);
     const t2 = window.setTimeout(() => setStage("revealing"), revealAt);
     const t3 = window.setTimeout(() => setStage("done"), goneAt);
