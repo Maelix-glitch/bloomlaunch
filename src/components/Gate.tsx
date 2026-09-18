@@ -76,6 +76,9 @@ export function Gate() {
   const [stage, setStage] = useState<"locked" | "unsealing" | "blinded" | "revealing" | "done">(() =>
     live ? "done" : "locked"
   );
+  // Remember whether this visit actually stood at the gate, so the rehearsal
+  // loop only re-runs a ceremony that happened.
+  const stoodAtGateRef = useRef(stage === "locked");
   useEffect(() => {
     if (!live || stage !== "locked") return;
     score.unseal();
@@ -95,6 +98,17 @@ export function Gate() {
       window.clearTimeout(t3);
     };
   }, [live, stage, reduced]);
+
+  // ⏳ TEMPORARY REHEARSAL LOOP — dev-only. After a ceremony finishes, the
+  // page reloads itself a few seconds later so the preview window plays the
+  // whole gate, including the final ten, on a loop. REMOVE with the
+  // rehearsal lock in launchClock when told to retrieve.
+  useEffect(() => {
+    if (stage !== "done" || !stoodAtGateRef.current) return;
+    if (!((import.meta as { env?: { DEV?: boolean } }).env?.DEV)) return;
+    const t = window.setTimeout(() => window.location.reload(), 5000);
+    return () => window.clearTimeout(t);
+  }, [stage]);
 
   // While the gate stands, the page beneath it does not scroll.
   useEffect(() => {
