@@ -117,17 +117,18 @@ export const score = {
     })();
   },
 
-  /** The visitor's drop, exactly at zero. Silent if it never decoded. */
+  /**
+   * The visitor's drop, exactly at zero — played RAW. It bypasses the
+   * site's compressor and every filter: the visitor's own master goes to
+   * the speakers exactly as they authored it. Silent if it never decoded.
+   */
   drop(): void {
     if (!enabled) return;
     const c = ensure();
-    const m = out();
-    if (c === null || m === null || c.state !== "running" || dropBuffer === null) return;
+    if (c === null || c.state !== "running" || dropBuffer === null) return;
     const src = c.createBufferSource();
     src.buffer = dropBuffer;
-    const g = c.createGain();
-    g.gain.value = 1;
-    src.connect(g).connect(m);
+    src.connect(c.destination);
     src.start(c.currentTime + 0.03);
   },
 
