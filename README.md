@@ -164,10 +164,10 @@ Bloom opens, and every page carries it.
 
 After the gate, `#brief` gives the app away in one orbit: six plates of information turning in a
 misty 3D carousel around the mark (a plain gallery wall under reduced motion). The closing CTA is
-the whitelist — "Be the first to test Bloom." Addresses POST as JSON to
-`VITE_WHITELIST_ENDPOINT` when it is set (Formspree, Web3Forms, a Supabase edge function — anything
-that accepts a JSON POST puts them in your database); without it they are kept in the visitor's
-own browser so the flow still works end to end.
+the whitelist — "Be the first to test Bloom." Addresses POST as JSON to the Formspree form
+(`formspree.io/f/xaenndvv`) and land in its inbox/CSV; `VITE_WHITELIST_ENDPOINT` can reroute them
+to anything else that accepts a JSON POST (Supabase, Web3Forms); without any endpoint they are
+kept in the visitor's own browser so the flow still works end to end.
 
 ## The royal gate
 

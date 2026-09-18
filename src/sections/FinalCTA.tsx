@@ -7,12 +7,15 @@ import { Magnetic } from "../components/Magnetic";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
 /**
- * Where whitelist signups go. Set VITE_WHITELIST_ENDPOINT (Formspree,
- * Web3Forms, a Supabase edge function — anything that takes a JSON POST)
- * and every address lands in your database. Without it, addresses are kept
- * in the visitor's own browser so the form still works end to end.
+ * Where whitelist signups go. The launch list lives on Formspree; every
+ * address POSTed here lands in its inbox/CSV. VITE_WHITELIST_ENDPOINT can
+ * still point the form somewhere else (Supabase, Web3Forms — anything that
+ * takes a JSON POST). Without any endpoint at all, addresses are kept in
+ * the visitor's own browser so the flow still works end to end.
  */
-const WHITELIST_ENDPOINT = (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_WHITELIST_ENDPOINT;
+const WHITELIST_ENDPOINT =
+  (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_WHITELIST_ENDPOINT ??
+  "https://formspree.io/f/xaenndvv";
 
 export function FinalCTA() {
   const ref = useRef<HTMLDivElement>(null);
@@ -31,7 +34,8 @@ export function FinalCTA() {
       if (WHITELIST_ENDPOINT) {
         const res = await fetch(WHITELIST_ENDPOINT, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          // Formspree answers JSON with JSON only when asked politely.
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify({ email: value, source: "bloom-launch", at: Date.now() }),
         });
         if (!res.ok) throw new Error("whitelist endpoint");
