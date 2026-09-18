@@ -82,6 +82,7 @@ export function Gate() {
   useEffect(() => {
     if (!live || stage !== "locked") return;
     score.unseal();
+    score.whoosh();
     setStage("unsealing");
     const blindAt = reduced ? 450 : 1950;
     const revealAt = reduced ? 800 : 2700;

@@ -249,6 +249,64 @@ export const score = {
   },
 
   /**
+   * Zero's whoosh: cinematic wind, bass-boosted. The band-pass sweep is the
+   * air rushing past; a driven low layer and a falling sub are the weight
+   * underneath — the light has mass when it leaves the keyhole.
+   */
+  whoosh(): void {
+    if (!enabled) return;
+    const c = ensure();
+    const m = out();
+    if (c === null || m === null || c.state !== "running") return;
+    const t0 = c.currentTime;
+
+    // The wind: noise swept up fast, then falling away.
+    const nz = c.createBufferSource();
+    nz.buffer = noiseBuffer(c, 2.4);
+    nz.playbackRate.setValueAtTime(0.75, t0);
+    nz.playbackRate.linearRampToValueAtTime(1.15, t0 + 0.5);
+    const bp = c.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.Q.value = 0.75;
+    bp.frequency.setValueAtTime(70, t0);
+    bp.frequency.exponentialRampToValueAtTime(2600, t0 + 0.45);
+    bp.frequency.exponentialRampToValueAtTime(110, t0 + 2.0);
+    const ng = c.createGain();
+    ng.gain.setValueAtTime(0.0001, t0);
+    ng.gain.linearRampToValueAtTime(0.5, t0 + 0.12);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.1);
+    nz.connect(bp).connect(ng).connect(m);
+    nz.start(t0);
+
+    // The bass-boosted body: the same wind, driven low and heavy.
+    const nz2 = c.createBufferSource();
+    nz2.buffer = noiseBuffer(c, 1.6);
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(420, t0);
+    lp.frequency.exponentialRampToValueAtTime(60, t0 + 1.4);
+    const bodyG = c.createGain();
+    bodyG.gain.setValueAtTime(0.0001, t0);
+    bodyG.gain.linearRampToValueAtTime(0.6, t0 + 0.1);
+    bodyG.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.5);
+    nz2.connect(lp).connect(shaper(c, 8)).connect(bodyG).connect(m);
+    nz2.start(t0);
+
+    // The sub that falls with the gust.
+    const sub = c.createOscillator();
+    sub.type = "sine";
+    sub.frequency.setValueAtTime(72, t0);
+    sub.frequency.exponentialRampToValueAtTime(26, t0 + 1.3);
+    const sg = c.createGain();
+    sg.gain.setValueAtTime(0.0001, t0);
+    sg.gain.linearRampToValueAtTime(0.8, t0 + 0.09);
+    sg.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.6);
+    sub.connect(sg).connect(m);
+    sub.start(t0);
+    sub.stop(t0 + 1.8);
+  },
+
+  /**
    * The reveal: a deep warm mass rising under the light — sub floor, low
    * fifth, the chord above — with a high shimmer like dust in the light.
    * This is the goosebump: enormous below, glittering above.
