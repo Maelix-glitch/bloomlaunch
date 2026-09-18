@@ -166,12 +166,20 @@ The whole site stands behind the countdown. Until the 24-hour window closes, a v
 the gate — a full-screen ceremony: gilded odometer digits inside a framed court, a slow-turning
 golden aura, a field that pulses on every real second, and a staged entrance. The nav, the nine
 surfaces, the palette — everything — stays mounted underneath but sealed: hidden, `inert`, and
-unscrollable, so the hero's frames are warm the moment the doors part.
+unscrollable, so the hero's frames are warm the moment of the reveal.
 
-The gate polices itself from the same one clock as every counter: the instant the window closes it
-runs its ceremony (gold flash, doors parting) and hands the site over. A visitor arriving after
-launch never sees it. Because an expired window reads as *open* — it never restarts — nobody can
-be locked out twice.
+The last ten seconds are played like a film: letterbox bars close in, film grain and flicker come
+up, the aura races, and one giant numeral counts 10 → 1 alone on the screen, each second knocking
+with a flash and a shake. At zero: a gold flash, then a long, slow fade as the website is revealed
+underneath, settling from a slight push-in. A visitor arriving after launch never sees the gate.
+Because an expired window reads as *open* — it never restarts — nobody can be locked out twice.
+
+**The score** (`src/lib/score.ts`) is synthesized live with Web Audio — there are no audio files:
+one deep distorted knock per second for the last ten, the classic trailer riser (climbing noise,
+pitch and drive with glitch stutters tightening toward zero), a braaam impact at zero (a driven
+low-fifth chord, sub drop, crack, high glimmer), and a warm chord swell under the reveal. Browsers
+gate audio behind a visitor gesture, so the gate offers an **Enable sound** switch — and any touch
+on the gate wakes the score.
 
 Rehearse it from the address bar:
 
@@ -262,7 +270,9 @@ directly against the real modules with a stubbed network:
   and `withAlpha` parses, expands and clamps.
 - **Gate render check** — the sealed stage: viewport coverage, the six gilded digit columns plus
   the continuous wheel, the four court corners, the turning aura, the timer landmark, the
-  screen-reader reading, both time zones, and no leaked `undefined`/`NaN`.
+  screen-reader reading, both time zones, the sound switch, and no leaked `undefined`/`NaN`.
+- **Score check** — the score is a complete no-op without Web Audio (SSR, blocked autoplay), the
+  distortion curve is bounded, monotonic and centred, and harder drive saturates harder.
 - **Launch clock test (42 checks)** — a fake `requestAnimationFrame`, a fake DOM and a fake wall
   clock drive the shared clock directly: every subscriber reads one window (same object identity),
   the fast subscriber redraws about 30×/second and the seconds subscriber exactly once, no frame

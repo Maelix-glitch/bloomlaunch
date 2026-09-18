@@ -31,9 +31,24 @@ export default function App() {
 
   // The site stands behind the gate until the 24-hour window closes. It is
   // mounted underneath the whole time — so the hero's frames are warm by the
-  // moment the doors part — but sealed: hidden, inert, and unscrollable.
+  // moment it is revealed — but sealed: hidden, inert, and unscrollable.
   const sealed = gate.locked;
   const revealed = entered && !sealed;
+  // A visitor who waited at the gate gets the cinematic hand-off: a long
+  // fade while the site settles from a slight push-in. First-time reveals
+  // after the preloader keep the shorter fade they always had.
+  const [wasSealed] = useState(() => gate.locked);
+  const revealStyle = wasSealed
+    ? {
+        opacity: revealed ? 1 : 0,
+        transform: revealed ? "scale(1)" : "scale(1.035)",
+        transition:
+          "opacity 3.2s cubic-bezier(0.16,1,0.3,1), transform 4.2s cubic-bezier(0.16,1,0.3,1)",
+      }
+    : {
+        opacity: revealed ? 1 : 0,
+        transition: "opacity 0.9s cubic-bezier(0.16,1,0.3,1)",
+      };
 
   return (
     <div id="top" className="relative bg-[#050506]">
@@ -44,7 +59,7 @@ export default function App() {
       <Gate />
 
       <div
-        style={{ opacity: revealed ? 1 : 0, transition: "opacity 0.9s cubic-bezier(0.16,1,0.3,1)" }}
+        style={revealStyle}
         aria-hidden={!revealed}
         inert={sealed}
       >
