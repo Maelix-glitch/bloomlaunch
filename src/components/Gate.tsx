@@ -73,11 +73,25 @@ export function Gate() {
   // locked → unsealing (the countdown dissolves, the shackle opens, the light
   // is born in the keyhole) → blinded (light covers everything, the warm
   // chord swells) → revealing (the light ebbs, the site appears) → done.
+  //
+  // ⚠️ The ceremony is scheduled exactly once, the moment `live` flips — and
+  // `stage` must NOT be in this effect's deps. Every stage transition re-runs
+  // a subscribed effect, and the re-run's cleanup cancels the timers it just
+  // made — the gate would freeze mid-light and the site would never reveal.
   const [stage, setStage] = useState<"locked" | "unsealing" | "blinded" | "revealing" | "done">(() =>
     live ? "done" : "locked"
   );
+  const unsealedRef = useRef(false);
+  const reducedRef = useRef(Boolean(reduced));
   useEffect(() => {
-    if (!live || stage !== "locked") return;
+    reducedRef.current = Boolean(reduced);
+  }, [reduced]);
+  useEffect(() => {
+    if (!live || unsealedRef.current) return;
+    // Visitors arriving after launch initialise in "done"; the ceremony is
+    // only for the ones who were sealed in when the clock struck zero.
+    if (stage !== "locked") return;
+    unsealedRef.current = true;
     // The visitor's drop, raw and alone — the site's own voices stay out of
     // its way. The riser ends where the drop begins.
     score.cancelRiser();
@@ -85,9 +99,9 @@ export function Gate() {
     setStage("unsealing");
     // The light holds its breath for a second after zero, then runs
     // vertically, then the flashbang.
-    const blindAt = reduced ? 450 : 2100;
-    const revealAt = reduced ? 800 : 3400;
-    const goneAt = reduced ? 1800 : 7200;
+    const blindAt = reducedRef.current ? 450 : 2100;
+    const revealAt = reducedRef.current ? 800 : 3400;
+    const goneAt = reducedRef.current ? 1800 : 7200;
     const t1 = window.setTimeout(() => {
       setStage("blinded");
     }, blindAt);
@@ -98,7 +112,8 @@ export function Gate() {
       window.clearTimeout(t2);
       window.clearTimeout(t3);
     };
-  }, [live, stage, reduced]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live]);
 
   // While the gate stands, the page beneath it does not scroll.
   useEffect(() => {
