@@ -204,7 +204,7 @@ visitor's timezone. Until then it is unset (`null`) and the site counts a rollin
 anchored to each visitor's first visit and remembered in `localStorage` — always a real, running
 24-hour countdown rather than a placeholder date that silently expires.
 
-The shared date is set — `2026-09-20T00:00:00+05:30`, the same instant for every visitor on Earth
+The shared date is set — `2026-09-20T22:30:00+05:30`, the same instant for every visitor on Earth
 (change that one line to move the launch). With a date set, the full arc runs: the days scale
 before the window opens (a launch weeks out is hundreds of of hours away, and the odometer's hour
 field is two digits, so it counts days instead of lying), the odometer takes over for the final 24
