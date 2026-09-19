@@ -71,7 +71,9 @@ function read(now: number, w: Window): LaunchClockState {
  * `?unlocked` opens the site immediately, `?lock-for=N` locks it for N more
  * seconds. They only bend the anchor the window resolves from — the rolling
  * anchor a real visitor accumulates is never touched, so the override does
- * not follow them to their next visit.
+ * not follow them to their next visit. When present they take precedence
+ * over the configured launch date (see `resolveOnce`), so rehearsals keep
+ * working even after the real date is set.
  */
 function overrideAnchor(now: number): number | null {
   if (typeof window === "undefined") return null;
@@ -92,8 +94,13 @@ function overrideAnchor(now: number): number | null {
 /** Resolve the window and compute one reading. */
 export function resolveOnce(): LaunchClockState {
   const now = nowMs();
-  const anchor = overrideAnchor(now) ?? readAnchor();
-  const resolved = resolveWindow(now, anchor);
+  const override = overrideAnchor(now);
+  const anchor = override ?? readAnchor();
+  // A studio override is the point of the rehearsal — it must win over the
+  // configured launch date, or `?lock-for=N` would silently do nothing the
+  // moment a real date is set. Passing null configuredAt takes the rolling
+  // path with the bent anchor (and never writes it to localStorage).
+  const resolved = resolveWindow(now, anchor, override !== null ? null : undefined);
   // Persist the rollover anchor so a reload keeps the same window.
   if (resolved.rolling && anchor === null) writeAnchor(resolved.start);
   activeWindow = resolved;

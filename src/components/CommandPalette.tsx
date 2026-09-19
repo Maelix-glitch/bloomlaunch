@@ -4,6 +4,7 @@ import { BloomGlyph } from "./Logo";
 import { searchItems, type Searchable } from "../lib/search";
 import { useCountdown } from "../hooks/useCountdown";
 import { formatClock } from "../lib/countdown";
+import { acquireScrollLock } from "../lib/scrollLock";
 
 type Command = Searchable & {
   href: string;
@@ -111,11 +112,10 @@ export function CommandPalette() {
   useEffect(() => {
     if (!open) return;
     const timer = setTimeout(() => inputRef.current?.focus(), 40);
-    const previous = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = "hidden";
+    const releaseScrollLock = acquireScrollLock();
     return () => {
       clearTimeout(timer);
-      document.documentElement.style.overflow = previous;
+      releaseScrollLock();
     };
   }, [open]);
 

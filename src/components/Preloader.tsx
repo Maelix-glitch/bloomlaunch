@@ -4,6 +4,7 @@ import { BloomGlyph } from "./Logo";
 import { useMotionPreference } from "../hooks/useMotionPreference";
 import { useFrameSequenceStatus } from "../hooks/useFrameSequenceStatus";
 import { frameSequence } from "../lib/frameSequence";
+import { acquireScrollLock } from "../lib/scrollLock";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const CIRCUMFERENCE = 2 * Math.PI * 62;
@@ -31,14 +32,11 @@ export function Preloader({ onDone }: { onDone: () => void }) {
   }, [reduced]);
 
   // Hold the page still while the overture plays, and release it the moment
-  // the curtains start moving (or after the failsafe).
+  // the curtains start moving (or after the failsafe). Refcounted, so the
+  // gate's own hold (or anyone else's) survives this release.
   useEffect(() => {
     if (phase !== "loading") return;
-    const previous = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = "hidden";
-    return () => {
-      document.documentElement.style.overflow = previous;
-    };
+    return acquireScrollLock();
   }, [phase]);
 
   const ready = reduced || status.coarseReady || status.unsupported;
