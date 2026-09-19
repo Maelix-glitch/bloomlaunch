@@ -7,6 +7,7 @@ import { useCountdown } from "../hooks/useCountdown";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { buildIcs, formatLocalMoment, formatUtcMoment, stageCopy, windowPhase } from "../lib/countdown";
 import { score } from "../lib/score";
+import { acquireScrollLock } from "../lib/scrollLock";
 import { DAYS_SCALE, DIGIT_SCALE, Separator, Unit } from "../sections/LaunchCountdown";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -117,17 +118,12 @@ export function Gate() {
 
   // While the gate stands, the page beneath it does not scroll. Keyed to the
   // gate still standing rather than to mount: <Gate /> never unmounts (it
-  // renders null when done), so a mount-time cleanup would keep the page
-  // locked forever — including for visitors who arrive already live.
+  // renders null when done), and the refcounted lock means the preloader's
+  // earlier hold can't leak into the revealed site.
   const standing = stage !== "done";
   useEffect(() => {
     if (!standing) return;
-    const root = document.documentElement;
-    const prev = root.style.overflow;
-    root.style.overflow = "hidden";
-    return () => {
-      root.style.overflow = prev;
-    };
+    return acquireScrollLock();
   }, [standing]);
 
   const [copied, setCopied] = useState(false);
