@@ -115,15 +115,20 @@ export function Gate() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [live]);
 
-  // While the gate stands, the page beneath it does not scroll.
+  // While the gate stands, the page beneath it does not scroll. Keyed to the
+  // gate still standing rather than to mount: <Gate /> never unmounts (it
+  // renders null when done), so a mount-time cleanup would keep the page
+  // locked forever — including for visitors who arrive already live.
+  const standing = stage !== "done";
   useEffect(() => {
+    if (!standing) return;
     const root = document.documentElement;
     const prev = root.style.overflow;
     root.style.overflow = "hidden";
     return () => {
       root.style.overflow = prev;
     };
-  }, []);
+  }, [standing]);
 
   const [copied, setCopied] = useState(false);
   const [lockLoaded, setLockLoaded] = useState(false);
